@@ -1339,9 +1339,7 @@
                 return;
             }
             hideAllScreens();
-            googleScreen.style.display = 'block';
-            googleFrame.src = `https://www.google.com/search?q=${encodeURIComponent(App.currentQuery)}`;
-            tabs.classList.add('visible');
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(App.currentQuery)}`)
         }
 
         function shareResults() {
