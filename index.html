@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search with SEM — Instant Wikipedia Search</title>
+    <meta name="description" content="Search Wikipedia for instant summaries, images, trending topics and related articles. Works offline. No accounts. Always free.">
+    <meta name="theme-color" content="#4285f4">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --blue:#4285f4; --red:#ea4335; --yellow:#fbbc05; --green:#34a853;
+            --bg:#ffffff; --surface:#f8f9fa; --border:#dadce0;
+            --text:#202124; --muted:#5f6368;
+            --shadow:0 1px 6px rgba(32,33,36,.1); --shadow-lg:0 4px 20px rgba(32,33,36,.12);
+            --radius:14px;
+        }
+        [data-theme="dark"] {
+            --bg:#0e0e10; --surface:#18181b; --border:#2a2a30;
+            --text:#f1f1f2; --muted:#8e8e9a;
+            --shadow:0 1px 6px rgba(0,0,0,.3); --shadow-lg:0 4px 20px rgba(0,0,0,.4);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        html{scroll-behavior:smooth}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;transition:background .3s,color .3s}
+        a{color:inherit;text-decoration:none}
+
+        /* ── NAV ── */
+        nav{position:sticky;top:0;z-index:200;background:var(--bg);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:62px;transition:background .3s,border-color .3s}
+        .nav-logo{font-size:22px;font-weight:600;letter-spacing:-.5px;display:flex;user-select:none}
+        .c1{color:var(--blue)}.c2{color:var(--red)}.c3{color:var(--yellow)}.c4{color:var(--green)}.c5{color:var(--blue)}.c6{color:var(--red)}
+        .nav-right{display:flex;align-items:center;gap:4px}
+        .nav-link{color:var(--muted);font-size:14px;padding:7px 13px;border-radius:8px;transition:color .2s,background .2s;white-space:nowrap}
+        .nav-link:hover{color:var(--text);background:var(--surface)}
+        .theme-toggle{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;margin-left:4px}
+        .theme-toggle:hover{color:var(--text);border-color:var(--blue)}
+        .nav-open{background:var(--blue)!important;color:#fff!important;font-weight:600;border-radius:24px!important;padding:9px 20px!important;margin-left:4px;transition:opacity .2s!important}
+        .nav-open:hover{opacity:.88!important}
+        @media(max-width:680px){.nav-link:not(.nav-open){display:none}}
+
+        /* ── HERO ── */
+        .hero{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
+        .hero::before{content:'';position:absolute;width:700px;height:500px;background:radial-gradient(circle,rgba(66,133,244,.07) 0%,transparent 70%);top:-80px;left:50%;transform:translateX(-50%);pointer-events:none}
+        .hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--muted);margin-bottom:28px;letter-spacing:.04em}
+        .badge-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2.2s infinite}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+        .hero-logo{font-size:clamp(72px,14vw,110px);font-weight:600;letter-spacing:-4px;line-height:1;margin-bottom:8px;display:flex;user-select:none}
+        .hero-sub{font-size:18px;color:var(--muted);font-weight:300;letter-spacing:.06em;margin-bottom:28px}
+        .hero-headline{font-size:clamp(26px,5vw,44px);font-weight:700;line-height:1.22;max-width:640px;margin-bottom:16px}
+        .hero-desc{font-size:16px;color:var(--muted);max-width:460px;margin-bottom:38px;line-height:1.75}
+        .hero-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:40px}
+        .btn-primary{background:var(--blue);color:#fff;padding:14px 32px;border-radius:30px;font-size:16px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:opacity .2s,transform .2s;box-shadow:0 4px 14px rgba(66,133,244,.3)}
+        .btn-primary:hover{opacity:.88;transform:translateY(-2px)}
+        .btn-outline{background:transparent;color:var(--text);padding:14px 32px;border-radius:30px;font-size:16px;font-weight:500;border:1px solid var(--border);cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:border-color .2s,transform .2s,background .2s}
+        .btn-outline:hover{border-color:var(--blue);background:var(--surface);transform:translateY(-2px)}
+        .hero-proof{display:flex;gap:22px;color:var(--muted);font-size:13px;flex-wrap:wrap;justify-content:center}
+        .hero-proof span{display:flex;align-items:center;gap:5px}
+        .hero-proof i{color:var(--green)}
+
+        /* ── SECTIONS ── */
+        section{padding:88px 24px}
+        .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);margin-bottom:12px}
+        .section-title{font-size:clamp(26px,5vw,40px);font-weight:700;line-height:1.22;margin-bottom:12px}
+        .section-sub{color:var(--muted);font-size:16px;max-width:500px;line-height:1.7}
+        .section-center{text-align:center;max-width:900px;margin:0 auto}
+
+        /* ── HOW ── */
+        #how{background:var(--surface);transition:background .3s}
+        .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin:50px auto 0;max-width:900px}
+        .step{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:left;transition:background .3s,border-color .3s,transform .2s,box-shadow .2s}
+        .step:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+        .step-num{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+        .step-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:13px}
+        .step-icon.blue{background:rgba(66,133,244,.1);color:var(--blue)}
+        .step-icon.red{background:rgba(234,67,53,.1);color:var(--red)}
+        .step-icon.green{background:rgba(52,168,83,.1);color:var(--green)}
+        .step-icon.yellow{background:rgba(251,188,5,.1);color:var(--yellow)}
+        .step h3{font-size:15px;font-weight:600;margin-bottom:6px}
+        .step p{font-size:13px;color:var(--muted);line-height:1.6}
+
+        /* ── FEATURES ── */
+        #features{background:var(--bg);transition:background .3s}
+        .features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;margin:50px auto 0;max-width:900px}
+        .feat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;text-align:left;transition:background .3s,border-color .3s,transform .2s,box-shadow .2s}
+        .feat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+        .feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:13px}
+        .feat-card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+        .feat-card p{font-size:13px;color:var(--muted);line-height:1.6}
+
+        /* ── FEEDBACK ── */
+        #feedback{background:var(--surface);transition:background .3s}
+        .feedback-wrap{max-width:540px;margin:46px auto 0;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:34px;box-shadow:var(--shadow);transition:background .3s,border-color .3s}
+        .feedback-wrap h3{font-size:17px;font-weight:600;margin-bottom:5px}
+        .fb-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+        .star-row{display:flex;gap:6px;margin-bottom:20px}
+        .star{font-size:28px;cursor:pointer;color:var(--border);transition:color .15s,transform .15s;user-select:none;line-height:1}
+        .star.lit,.star:hover{color:var(--yellow);transform:scale(1.18)}
+        .field{margin-bottom:15px}
+        .field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+        .field input,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,background .3s;font-family:inherit;resize:vertical}
+        .field input:focus,.field textarea:focus{border-color:var(--blue)}
+        .field textarea{min-height:108px}
+        .send-btn{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
+        .send-btn:hover{opacity:.88}
+
+        /* ── FOOTER ── */
+        footer{background:var(--bg);border-top:1px solid var(--border);padding:30px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;transition:background .3s,border-color .3s}
+        .footer-logo{display:flex;align-items:center;gap:6px;font-size:18px;font-weight:600;user-select:none}
+        .footer-right{font-size:12px;color:var(--muted);text-align:right}
+        .footer-right a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+        @media(max-width:480px){.hero{padding:56px 20px 44px}.feedback-wrap{padding:24px 18px}footer{flex-direction:column;text-align:center}.footer-right{text-align:center}}
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="nav-logo">
+        <span class="c1">S</span><span class="c2">e</span><span class="c3">a</span><span class="c4">r</span><span class="c5">c</span><span class="c6">h</span>
+    </div>
+    <div class="nav-right">
+        <a href="#how"      class="nav-link">How it works</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#feedback" class="nav-link">Feedback</a>
+        <a href="install.html" class="nav-link">Install</a>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+        <a href="app.html" class="nav-link nav-open">Open App</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge"><span class="badge-dot"></span>Free &middot; No account &middot; Works offline</div>
+    <div class="hero-logo"><span class="c1">S</span><span class="c2">e</span><span class="c3">a</span><span class="c4">r</span><span class="c5">c</span><span class="c6">h</span></div>
+    <div class="hero-sub">with SEM</div>
+    <h1 class="hero-headline">Wikipedia search,<br>fast and beautiful.</h1>
+    <p class="hero-desc">Instant summaries. Full-screen images. Live trending topics. Related articles that keep you exploring — all without leaving the app.</p>
+    <div class="hero-actions">
+        <a href="app.html"     class="btn-primary"><i class="fas fa-search"></i> Start Searching</a>
+        <a href="install.html" class="btn-outline"><i class="fas fa-download"></i> Install App</a>
+    </div>
+    <div class="hero-proof">
+        <span><i class="fas fa-check-circle"></i> Works offline</span>
+        <span><i class="fas fa-check-circle"></i> No ads</span>
+        <span><i class="fas fa-check-circle"></i> No account needed</span>
+        <span><i class="fas fa-check-circle"></i> Always free</span>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+    <div class="section-center">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Three taps. That's it.</h2>
+        <p class="section-sub">No accounts. No waiting. No paywalls. Just type, read, and explore.</p>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-icon blue"><i class="fas fa-keyboard"></i></div>
+                <h3>Type or speak your search</h3>
+                <p>Type a topic or tap the mic. SEM searches Wikipedia's entire knowledge base instantly.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-icon red"><i class="fas fa-align-left"></i></div>
+                <h3>Get summary and images</h3>
+                <p>A clean summary with full-screen images you can swipe through. One topic, the full picture.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-icon green"><i class="fas fa-link"></i></div>
+                <h3>Explore related topics</h3>
+                <p>Related article pills appear below every summary. Tap one to keep going without missing a beat.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <div class="step-icon yellow"><i class="fab fa-google"></i></div>
+                <h3>Jump to Google or YouTube</h3>
+                <p>Want more? Tap Google or YouTube — your search query carries over automatically.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+    <div class="section-center">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Built for curious minds.</h2>
+        <p class="section-sub">Everything you need to learn anything, on any device, even without internet.</p>
+        <div class="features-grid">
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(66,133,244,.1);color:var(--blue)"><i class="fas fa-bolt"></i></div>
+                <h3>Instant Wikipedia summaries</h3>
+                <p>Clean, readable summaries from Wikipedia's REST API — no clutter, no ads, no noise.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(234,67,53,.1);color:var(--red)"><i class="fas fa-images"></i></div>
+                <h3>Full-screen image gallery</h3>
+                <p>All article images in a tap-to-expand gallery. Swipe through them one by one, full screen.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(251,188,5,.1);color:var(--yellow)"><i class="fas fa-fire-alt"></i></div>
+                <h3>Live trending topics</h3>
+                <p>Wikipedia's most-read articles today, right on the home screen. See what the world is reading.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(52,168,83,.1);color:var(--green)"><i class="fas fa-project-diagram"></i></div>
+                <h3>Related article exploration</h3>
+                <p>Every summary shows related topics as clickable pills. Dive deeper without leaving the app.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(66,133,244,.1);color:var(--blue)"><i class="fas fa-wifi-slash"></i></div>
+                <h3>Full offline support</h3>
+                <p>Searched something before? It's cached. Read it again with no connection — great for low-data situations.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(234,67,53,.1);color:var(--red)"><i class="fas fa-microphone"></i></div>
+                <h3>Voice search</h3>
+                <p>Tap the mic and speak your query. SEM transcribes and searches immediately. Hands-free.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(251,188,5,.1);color:var(--yellow)"><i class="fas fa-moon"></i></div>
+                <h3>Light &amp; dark mode</h3>
+                <p>Switch between a clean light theme and a comfortable dark theme. It remembers your choice.</p>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(52,168,83,.1);color:var(--green)"><i class="fas fa-mobile-alt"></i></div>
+                <h3>Installable PWA</h3>
+                <p>Add to your home screen on Android or iOS. Opens like a native app. No app store needed.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEEDBACK -->
+<section id="feedback">
+    <div class="section-center">
+        <div class="section-label">Feedback</div>
+        <h2 class="section-title">Tell us what you think.</h2>
+        <p class="section-sub">We're building SEM for people like you. Your feedback shapes what comes next. Good or bad — we want to hear it.</p>
+        <div class="feedback-wrap">
+            <h3>Share your experience</h3>
+            <div class="field">
+                <label>Your Rating</label>
+                <div class="star-row" id="starRow">
+                    <span class="star" data-v="1">★</span>
+                    <span class="star" data-v="2">★</span>
+                    <span class="star" data-v="3">★</span>
+                    <span class="star" data-v="4">★</span>
+                    <span class="star" data-v="5">★</span>
+                </div>
+            </div>
+            <div class="field">
+                <label>Your Name <span style="font-weight:400;text-transform:none">(optional)</span></label>
+                <input type="text" id="fbName" placeholder="e.g. Amara">
+            </div>
+            <div class="field">
+                <label>Your Feedback</label>
+                <textarea id="fbMessage" placeholder="What do you love? What's missing? Any bugs?"></textarea>
+            </div>
+            <button class="send-btn" id="sendBtn">
+                <i class="fas fa-envelope"></i> Send Feedback
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-logo">
+        <span class="c1">S</span><span class="c2">e</span><span class="c3">a</span><span class="c4">r</span><span class="c5">c</span><span class="c6">h</span>
+        <span style="color:var(--muted);font-weight:300;font-size:16px">with SEM</span>
+    </div>
+    <div class="footer-right">
+        by <a href="https://emltechstudio.site" target="_blank" rel="noopener">EML Tech Studio</a><br>
+         &middot; emltechstudio@gmail.com
+    </div>
+</footer>
+
+<script>
+// ── Theme ─────────────────────────────────────────────────────────────
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon   = document.getElementById('themeIcon');
+
+function applyTheme(dark) {
+    if (dark) {
+        document.body.setAttribute('data-theme','dark');
+        themeIcon.className = 'fas fa-sun';
+    } else {
+        document.body.removeAttribute('data-theme');
+        themeIcon.className = 'fas fa-moon';
+    }
+    localStorage.setItem('sem-site-theme', dark ? 'dark' : 'light');
+}
+
+const saved = localStorage.getItem('sem-site-theme');
+const prefersDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+applyTheme(saved ? saved === 'dark' : prefersDark);
+
+themeToggle.addEventListener('click', () =>
+    applyTheme(document.body.getAttribute('data-theme') !== 'dark')
+);
+
+// ── Stars ─────────────────────────────────────────────────────────────
+let rating = 0;
+const stars = document.querySelectorAll('.star');
+stars.forEach(s => {
+    s.addEventListener('mouseover', () =>
+        stars.forEach(st => st.classList.toggle('lit', +st.dataset.v <= +s.dataset.v)));
+    s.addEventListener('mouseout', () =>
+        stars.forEach(st => st.classList.toggle('lit', +st.dataset.v <= rating)));
+    s.addEventListener('click', () => {
+        rating = +s.dataset.v;
+        stars.forEach(st => st.classList.toggle('lit', +st.dataset.v <= rating));
+    });
+});
+
+// ── Feedback → mailto ─────────────────────────────────────────────────
+document.getElementById('sendBtn').addEventListener('click', () => {
+    const msg = document.getElementById('fbMessage').value.trim();
+    const name = document.getElementById('fbName').value.trim();
+    const msgEl = document.getElementById('fbMessage');
+
+    if (!msg) {
+        msgEl.style.borderColor = 'var(--red)';
+        msgEl.focus();
+        setTimeout(() => msgEl.style.borderColor = '', 1800);
+        return;
+    }
+
+    const starsLabel = rating > 0
+        ? '★'.repeat(rating) + '☆'.repeat(5 - rating) + ' (' + rating + '/5)'
+        : 'No rating';
+
+    const subject = encodeURIComponent('Search with SEM — Feedback');
+    const body = encodeURIComponent(
+'Rating: ' + starsLabel + '\n' +
+'From: ' + (name || 'Anonymous') + '\n\n' +
+'Feedback:\n' + msg + '\n\n' +
+'---\nSent from searchwithsem.afric.site'
+    );
+
+    window.location.href = 'mailto:emltechstudio@gmail.com?subject=' + subject + '&body=' + body;
+});
+</script>
+</body>
+</html>

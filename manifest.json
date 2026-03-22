@@ -1,0 +1,24 @@
+{
+  "name": "Search with SEM",
+  "short_name": "SEM Search",
+  "description": "Fast Wikipedia search with summaries, images, trending topics and related articles.",
+  "start_url": "./app.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#4285f4",
+  "categories": ["education", "utilities", "news"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
