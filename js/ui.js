@@ -8,93 +8,8 @@ import { shareTopic, shareToPlatform } from './share.js';
 import { logEvent, EVENT_TYPES } from './analytics.js';
 import { AUTO_SAVE_KEY, THEME_KEY, DEFAULT_SETTINGS } from './config.js';
 
-// DOM Elements
-const elements = {
-  // Loading
-  loading: null,
-  loadingText: null,
-  
-  // Header
-  header: null,
-  headerLogo: null,
-  searchWrap: null,
-  searchInput: null,
-  voiceBtn: null,
-  searchBtn: null,
-  autoSaveIndicator: null,
-  onlineIndicator: null,
-  
-  // Main
-  main: null,
-  
-  // Home
-  homeScreen: null,
-  homeLogo: null,
-  homeSub: null,
-  librarySection: null,
-  libraryGrid: null,
-  trendingSection: null,
-  trendingChips: null,
-  
-  // Topic
-  topicScreen: null,
-  topicCover: null,
-  topicTitle: null,
-  topicSubtitle: null,
-  quickFact: null,
-  quickFactContent: null,
-  quickFactToggle: null,
-  wikiSummary: null,
-  imagesStrip: null,
-  imagesStripContainer: null,
-  readFullBtn: null,
-  relatedChips: null,
-  userNote: null,
-  saveBtn: null,
-  shareBtn: null,
-  
-  // Reader
-  readerScreen: null,
-  readerContent: null,
-  readerClose: null,
-  
-  // Library
-  libraryScreen: null,
-  librarySearch: null,
-  libraryTags: null,
-  libraryResults: null,
-  
-  // Lightbox
-  lightbox: null,
-  lbImg: null,
-  lbCaption: null,
-  lbCounter: null,
-  lbClose: null,
-  lbPrev: null,
-  lbNext: null,
-  
-  // Footer
-  footer: null,
-  homeBtn: null,
-  libraryBtn: null,
-  historyBtn: null,
-  themeBtn: null,
-  
-  // History Panel
-  historyPanel: null,
-  historyList: null,
-  clearHistoryBtn: null,
-  closeHistoryBtn: null,
-  
-  // First Run Modal
-  firstRunModal: null,
-  firstRunOverlay: null,
-  firstRunYes: null,
-  firstRunNo: null
-};
-
 // State
-const state = {
+let state = {
   currentView: 'home',
   currentTopic: null,
   currentImages: [],
@@ -105,6 +20,13 @@ const state = {
   autoSave: false,
   theme: 'light'
 };
+
+// DOM Elements - will be cached on init
+let elements = {};
+
+// Voice recognition
+let recognition = null;
+let isListening = false;
 
 // Initialize UI
 export async function initUI() {
@@ -135,78 +57,99 @@ export async function initUI() {
     updateOnlineIndicator();
     showToast('Offline - using cached data');
   });
+  
+  // Initialize voice
+  initVoice();
 }
 
 // Cache DOM elements
 function cacheElements() {
-  elements.loading = document.getElementById('loading');
-  elements.loadingText = document.getElementById('loadingText');
-  
-  elements.header = document.querySelector('header');
-  elements.headerLogo = document.getElementById('headerLogo');
-  elements.searchWrap = document.querySelector('.search-wrap');
-  elements.searchInput = document.getElementById('searchInput');
-  elements.voiceBtn = document.getElementById('voiceBtn');
-  elements.searchBtn = document.getElementById('searchBtn');
-  
-  elements.main = document.querySelector('main');
-  
-  elements.homeScreen = document.getElementById('homeScreen');
-  elements.homeLogo = document.getElementById('homeLogo');
-  elements.homeSub = document.querySelector('.home-sub');
-  elements.librarySection = document.querySelector('.library-section');
-  elements.libraryGrid = document.getElementById('libraryGrid');
-  elements.trendingSection = document.querySelector('.trending-section');
-  elements.trendingChips = document.getElementById('trendingChips');
-  
-  elements.topicScreen = document.getElementById('topicScreen');
-  elements.topicCover = document.getElementById('topicCover');
-  elements.topicTitle = document.getElementById('topicTitle');
-  elements.topicSubtitle = document.getElementById('topicSubtitle');
-  elements.quickFact = document.getElementById('quickFact');
-  elements.quickFactContent = document.getElementById('quickFactContent');
-  elements.quickFactToggle = document.getElementById('quickFactToggle');
-  elements.wikiSummary = document.getElementById('wikiSummary');
-  elements.imagesStrip = document.getElementById('imagesStrip');
-  elements.imagesStripContainer = document.querySelector('.images-strip-container');
-  elements.readFullBtn = document.getElementById('readFullBtn');
-  elements.relatedChips = document.getElementById('relatedChips');
-  elements.userNote = document.getElementById('userNote');
-  elements.saveBtn = document.getElementById('saveBtn');
-  elements.shareBtn = document.getElementById('shareBtn');
-  
-  elements.readerScreen = document.getElementById('readerScreen');
-  elements.readerContent = document.getElementById('readerContent');
-  elements.readerClose = document.getElementById('readerClose');
-  
-  elements.libraryScreen = document.getElementById('libraryScreen');
-  elements.librarySearch = document.getElementById('librarySearch');
-  elements.libraryTags = document.getElementById('libraryTags');
-  elements.libraryResults = document.getElementById('libraryResults');
-  
-  elements.lightbox = document.getElementById('lightbox');
-  elements.lbImg = document.getElementById('lbImg');
-  elements.lbCaption = document.getElementById('lbCaption');
-  elements.lbCounter = document.getElementById('lbCounter');
-  elements.lbClose = document.getElementById('lbClose');
-  elements.lbPrev = document.getElementById('lbPrev');
-  elements.lbNext = document.getElementById('lbNext');
-  
-  elements.footer = document.querySelector('footer');
-  elements.homeBtn = document.getElementById('homeBtn');
-  elements.libraryBtn = document.getElementById('libraryBtn');
-  elements.historyBtn = document.getElementById('historyBtn');
-  elements.themeBtn = document.getElementById('themeBtn');
-  
-  elements.historyPanel = document.getElementById('historyPanel');
-  elements.historyList = document.getElementById('historyList');
-  elements.clearHistoryBtn = document.getElementById('clearHistoryBtn');
-  elements.closeHistoryBtn = document.getElementById('closeHistoryBtn');
-  
-  elements.firstRunModal = document.getElementById('firstRunModal');
-  elements.firstRunOverlay = document.getElementById('firstRunOverlay');
-  elements.firstRunYes = document.getElementById('firstRunYes');
-  elements.firstRunNo = document.getElementById('firstRunNo');
+  elements = {
+    // Loading
+    loading: document.getElementById('loading'),
+    loadingText: document.getElementById('loadingText'),
+    
+    // Header
+    header: document.querySelector('header'),
+    headerLogo: document.getElementById('headerLogo'),
+    searchWrap: document.querySelector('.search-wrap'),
+    searchInput: document.getElementById('searchInput'),
+    voiceBtn: document.getElementById('voiceBtn'),
+    searchBtn: document.getElementById('searchBtn'),
+    autoSaveIndicator: document.getElementById('autoSaveIndicator'),
+    onlineIndicator: document.getElementById('onlineIndicator'),
+    
+    // Main
+    main: document.querySelector('main'),
+    
+    // Home
+    homeScreen: document.getElementById('homeScreen'),
+    homeLogo: document.getElementById('homeLogo'),
+    homeSub: document.querySelector('.home-sub'),
+    librarySection: document.querySelector('.library-section'),
+    libraryGrid: document.getElementById('libraryGrid'),
+    trendingSection: document.querySelector('.trending-section'),
+    trendingChips: document.getElementById('trendingChips'),
+    
+    // Topic
+    topicScreen: document.getElementById('topicScreen'),
+    topicCover: document.getElementById('topicCover'),
+    topicTitle: document.getElementById('topicTitle'),
+    topicSubtitle: document.getElementById('topicSubtitle'),
+    quickFact: document.getElementById('quickFact'),
+    quickFactContent: document.getElementById('quickFactContent'),
+    quickFactToggle: document.getElementById('quickFactToggle'),
+    wikiSummary: document.getElementById('wikiSummary'),
+    imagesStrip: document.getElementById('imagesStrip'),
+    imagesStripContainer: document.querySelector('.images-strip-container'),
+    readFullBtn: document.getElementById('readFullBtn'),
+    relatedChips: document.getElementById('relatedChips'),
+    userNote: document.getElementById('userNote'),
+    saveBtn: document.getElementById('saveBtn'),
+    shareBtn: document.getElementById('shareBtn'),
+    
+    // Reader
+    readerScreen: document.getElementById('readerScreen'),
+    readerContent: document.getElementById('readerContent'),
+    readerClose: document.getElementById('readerClose'),
+    readerTitle: document.getElementById('readerTitle'),
+    
+    // Library
+    libraryScreen: document.getElementById('libraryScreen'),
+    librarySearch: document.getElementById('librarySearch'),
+    libraryTags: document.getElementById('libraryTags'),
+    libraryResults: document.getElementById('libraryResults'),
+    librarySearchClear: document.getElementById('librarySearchClear'),
+    
+    // Lightbox
+    lightbox: document.getElementById('lightbox'),
+    lbImg: document.getElementById('lbImg'),
+    lbCaption: document.getElementById('lbCaption'),
+    lbCounter: document.getElementById('lbCounter'),
+    lbClose: document.getElementById('lbClose'),
+    lbPrev: document.getElementById('lbPrev'),
+    lbNext: document.getElementById('lbNext'),
+    
+    // Footer
+    footer: document.querySelector('footer'),
+    homeBtn: document.getElementById('homeBtn'),
+    libraryBtn: document.getElementById('libraryBtn'),
+    historyBtn: document.getElementById('historyBtn'),
+    themeBtn: document.getElementById('themeBtn'),
+    themeIcon: document.getElementById('themeIcon'),
+    
+    // History Panel
+    historyPanel: document.getElementById('historyPanel'),
+    historyList: document.getElementById('historyList'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+    
+    // First Run Modal
+    firstRunModal: document.getElementById('firstRunModal'),
+    firstRunOverlay: document.getElementById('firstRunOverlay'),
+    firstRunYes: document.getElementById('firstRunYes'),
+    firstRunNo: document.getElementById('firstRunNo')
+  };
 }
 
 // Load settings
@@ -216,6 +159,11 @@ async function loadSettings() {
   
   // Apply theme
   applyTheme(state.theme);
+  
+  // Update auto-save indicator
+  if (elements.autoSaveIndicator) {
+    elements.autoSaveIndicator.textContent = state.autoSave ? 'Auto-Save: ON' : 'Auto-Save: OFF';
+  }
   
   // Show first run modal if needed
   const firstRun = await getSetting('firstRun', true);
@@ -232,52 +180,109 @@ function applyTheme(theme) {
   } else {
     document.body.removeAttribute('data-theme');
   }
+  
+  // Update theme icon
+  if (elements.themeIcon) {
+    elements.themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  }
 }
 
 // Setup event listeners
 function setupEventListeners() {
   // Search
-  elements.searchInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      performSearch();
-    }
-  });
+  if (elements.searchInput) {
+    elements.searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+  }
   
-  elements.searchBtn?.addEventListener('click', performSearch);
-  elements.voiceBtn?.addEventListener('click', toggleVoice);
+  if (elements.searchBtn) {
+    elements.searchBtn.addEventListener('click', performSearch);
+  }
+  
+  if (elements.voiceBtn) {
+    elements.voiceBtn.addEventListener('click', toggleVoice);
+  }
   
   // Navigation
-  elements.homeBtn?.addEventListener('click', () => showView('home'));
-  elements.libraryBtn?.addEventListener('click', () => showView('library'));
-  elements.historyBtn?.addEventListener('click', () => toggleHistoryPanel());
-  elements.themeBtn?.addEventListener('click', toggleTheme);
-  elements.headerLogo?.addEventListener('click', () => showView('home'));
-  elements.homeLogo?.addEventListener('click', () => showView('home'));
+  if (elements.homeBtn) {
+    elements.homeBtn.addEventListener('click', () => showView('home'));
+  }
+  
+  if (elements.libraryBtn) {
+    elements.libraryBtn.addEventListener('click', () => showView('library'));
+  }
+  
+  if (elements.historyBtn) {
+    elements.historyBtn.addEventListener('click', () => toggleHistoryPanel());
+  }
+  
+  if (elements.themeBtn) {
+    elements.themeBtn.addEventListener('click', toggleTheme);
+  }
+  
+  if (elements.headerLogo) {
+    elements.headerLogo.addEventListener('click', () => showView('home'));
+  }
+  
+  if (elements.homeLogo) {
+    elements.homeLogo.addEventListener('click', () => showView('home'));
+  }
   
   // Topic actions
-  elements.readFullBtn?.addEventListener('click', openReader);
-  elements.saveBtn?.addEventListener('click', saveCurrentTopic);
-  elements.shareBtn?.addEventListener('click', shareCurrentTopic);
+  if (elements.readFullBtn) {
+    elements.readFullBtn.addEventListener('click', openReader);
+  }
+  
+  if (elements.saveBtn) {
+    elements.saveBtn.addEventListener('click', saveCurrentTopic);
+  }
+  
+  if (elements.shareBtn) {
+    elements.shareBtn.addEventListener('click', shareCurrentTopic);
+  }
   
   // Quick fact toggle
-  elements.quickFactToggle?.addEventListener('click', toggleQuickFact);
+  if (elements.quickFactToggle) {
+    elements.quickFactToggle.addEventListener('click', toggleQuickFact);
+  }
   
   // User note
-  elements.userNote?.addEventListener('input', (e) => {
-    state.currentNote = e.target.value;
-    // Auto-save note every 30 seconds
-    if (state.currentTopic) {
-      debounceAutoSave();
-    }
-  });
+  if (elements.userNote) {
+    elements.userNote.addEventListener('input', (e) => {
+      state.currentNote = e.target.value;
+      // Auto-save note every 30 seconds
+      if (state.currentTopic) {
+        debounceAutoSave();
+      }
+    });
+  }
+  
+  // Reader close
+  if (elements.readerClose) {
+    elements.readerClose.addEventListener('click', () => showView('topic'));
+  }
   
   // Lightbox
-  elements.lbClose?.addEventListener('click', closeLightbox);
-  elements.lbPrev?.addEventListener('click', () => shiftLb(-1));
-  elements.lbNext?.addEventListener('click', () => shiftLb(1));
-  elements.lightbox?.addEventListener('click', (e) => {
-    if (e.target === elements.lightbox) closeLightbox();
-  });
+  if (elements.lbClose) {
+    elements.lbClose.addEventListener('click', closeLightbox);
+  }
+  
+  if (elements.lbPrev) {
+    elements.lbPrev.addEventListener('click', () => shiftLb(-1));
+  }
+  
+  if (elements.lbNext) {
+    elements.lbNext.addEventListener('click', () => shiftLb(1));
+  }
+  
+  if (elements.lightbox) {
+    elements.lightbox.addEventListener('click', (e) => {
+      if (e.target === elements.lightbox) closeLightbox();
+    });
+  }
   
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
@@ -292,14 +297,16 @@ function setupEventListeners() {
   
   // Swipe on lightbox
   let touchX = 0;
-  elements.lightbox?.addEventListener('touchstart', (e) => {
-    touchX = e.touches[0].clientX;
-  }, { passive: true });
-  
-  elements.lightbox?.addEventListener('touchend', (e) => {
-    const diff = touchX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 48) shiftLb(diff > 0 ? 1 : -1);
-  });
+  if (elements.lightbox) {
+    elements.lightbox.addEventListener('touchstart', (e) => {
+      touchX = e.touches[0].clientX;
+    }, { passive: true });
+    
+    elements.lightbox.addEventListener('touchend', (e) => {
+      const diff = touchX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 48) shiftLb(diff > 0 ? 1 : -1);
+    });
+  }
   
   // Close history on outside tap
   document.addEventListener('click', (e) => {
@@ -310,33 +317,55 @@ function setupEventListeners() {
   });
   
   // Library search
-  elements.librarySearch?.addEventListener('input', (e) => {
-    renderLibrary(e.target.value);
-  });
+  if (elements.librarySearch) {
+    elements.librarySearch.addEventListener('input', (e) => {
+      renderLibrary(e.target.value);
+    });
+  }
+  
+  if (elements.librarySearchClear) {
+    elements.librarySearchClear.addEventListener('click', () => {
+      if (elements.librarySearch) {
+        elements.librarySearch.value = '';
+        renderLibrary('');
+      }
+    });
+  }
   
   // First run modal
-  elements.firstRunYes?.addEventListener('click', () => {
-    state.autoSave = true;
-    setSetting(AUTO_SAVE_KEY, true);
-    closeFirstRunModal();
-  });
+  if (elements.firstRunYes) {
+    elements.firstRunYes.addEventListener('click', () => {
+      state.autoSave = true;
+      setSetting(AUTO_SAVE_KEY, true);
+      closeFirstRunModal();
+      if (elements.autoSaveIndicator) {
+        elements.autoSaveIndicator.textContent = 'Auto-Save: ON';
+      }
+    });
+  }
   
-  elements.firstRunNo?.addEventListener('click', () => {
-    state.autoSave = false;
-    setSetting(AUTO_SAVE_KEY, false);
-    closeFirstRunModal();
-  });
+  if (elements.firstRunNo) {
+    elements.firstRunNo.addEventListener('click', () => {
+      state.autoSave = false;
+      setSetting(AUTO_SAVE_KEY, false);
+      closeFirstRunModal();
+    });
+  }
   
   // History
-  elements.clearHistoryBtn?.addEventListener('click', () => {
-    if (confirm('Clear all history?')) {
-      clearHistory();
-      renderHistory();
-      showToast('History cleared');
-    }
-  });
+  if (elements.clearHistoryBtn) {
+    elements.clearHistoryBtn.addEventListener('click', () => {
+      if (confirm('Clear all history?')) {
+        clearHistory();
+        renderHistory();
+        showToast('History cleared');
+      }
+    });
+  }
   
-  elements.closeHistoryBtn?.addEventListener('click', closeHistoryPanel);
+  if (elements.closeHistoryBtn) {
+    elements.closeHistoryBtn.addEventListener('click', closeHistoryPanel);
+  }
 }
 
 // Debounced auto-save
@@ -376,20 +405,23 @@ function showView(view) {
   
   switch (view) {
     case 'home':
-      elements.homeScreen?.style.display = 'flex';
+      if (elements.homeScreen) elements.homeScreen.style.display = 'flex';
       setActiveFooter('home');
       break;
     case 'topic':
-      elements.topicScreen?.style.display = 'block';
+      if (elements.topicScreen) elements.topicScreen.style.display = 'block';
       setActiveFooter('library');
       break;
     case 'reader':
-      elements.readerScreen?.style.display = 'block';
+      if (elements.readerScreen) elements.readerScreen.style.display = 'block';
       setActiveFooter('library');
       break;
     case 'library':
-      elements.libraryScreen?.style.display = 'block';
-      renderLibrary();
+      if (elements.libraryScreen) {
+        elements.libraryScreen.style.display = 'block';
+        renderLibrary();
+        renderLibraryTags();
+      }
       setActiveFooter('library');
       break;
   }
@@ -399,8 +431,11 @@ function showView(view) {
 
 // Set active footer button
 function setActiveFooter(button) {
-  [elements.homeBtn, elements.libraryBtn, elements.historyBtn, elements.themeBtn].forEach(btn => {
-    btn?.classList.remove('active');
+  if (!elements.footer) return;
+  
+  const buttons = [elements.homeBtn, elements.libraryBtn, elements.historyBtn, elements.themeBtn];
+  buttons.forEach(btn => {
+    if (btn) btn.classList.remove('active');
   });
   
   const activeBtn = {
@@ -410,12 +445,16 @@ function setActiveFooter(button) {
     theme: elements.themeBtn
   }[button];
   
-  activeBtn?.classList.add('active');
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
 }
 
 // Perform search
 async function performSearch() {
-  const query = elements.searchInput?.value.trim();
+  if (!elements.searchInput) return;
+  
+  const query = elements.searchInput.value.trim();
   if (!query) {
     showToast('Enter something to search');
     return;
@@ -482,28 +521,43 @@ async function performSearch() {
 // Render topic view
 function renderTopicView(instantAnswer, isSaved) {
   // Cover image
-  if (state.currentTopic.coverImage) {
-    elements.topicCover?.setAttribute('src', state.currentTopic.coverImage);
-    elements.topicCover?.style.display = 'block';
-  } else {
-    elements.topicCover?.style.display = 'none';
+  if (elements.topicCover) {
+    if (state.currentTopic.coverImage) {
+      elements.topicCover.src = state.currentTopic.coverImage;
+      elements.topicCover.style.display = 'block';
+    } else {
+      elements.topicCover.style.display = 'none';
+    }
   }
   
   // Title and subtitle
-  elements.topicTitle?.textContent = state.currentTopic.title;
-  elements.topicSubtitle?.textContent = instantAnswer ? 'Quick Fact Available' : '';
+  if (elements.topicTitle) {
+    elements.topicTitle.textContent = state.currentTopic.title;
+  }
+  
+  if (elements.topicSubtitle) {
+    elements.topicSubtitle.textContent = instantAnswer ? 'Quick Fact Available' : '';
+  }
   
   // Quick fact
-  if (instantAnswer) {
-    elements.quickFactContent?.textContent = instantAnswer;
-    elements.quickFact?.style.display = 'block';
-    elements.quickFactToggle?.textContent = 'Hide Quick Fact';
+  if (instantAnswer && elements.quickFactContent) {
+    elements.quickFactContent.textContent = instantAnswer;
+    if (elements.quickFact) {
+      elements.quickFact.style.display = 'block';
+    }
+    if (elements.quickFactToggle) {
+      elements.quickFactToggle.textContent = 'Hide Quick Fact';
+    }
   } else {
-    elements.quickFact?.style.display = 'none';
+    if (elements.quickFact) {
+      elements.quickFact.style.display = 'none';
+    }
   }
   
   // Wikipedia summary
-  elements.wikiSummary?.innerHTML = `<p>${state.currentTopic.summary}</p>`;
+  if (elements.wikiSummary) {
+    elements.wikiSummary.innerHTML = `<p>${state.currentTopic.summary}</p>`;
+  }
   
   // Images strip
   renderImagesStrip();
@@ -512,20 +566,33 @@ function renderTopicView(instantAnswer, isSaved) {
   renderRelatedChips();
   
   // User note
-  elements.userNote?.value = state.currentNote;
+  if (elements.userNote) {
+    elements.userNote.value = state.currentNote;
+  }
   
   // Save button
-  elements.saveBtn?.textContent = isSaved ? 'Saved ✓' : 'Save';
-  elements.saveBtn?.dataset.saved = isSaved.toString();
+  if (elements.saveBtn) {
+    elements.saveBtn.textContent = isSaved ? 'Saved ✓' : 'Save';
+    elements.saveBtn.dataset.saved = isSaved.toString();
+  }
   
   // Reader button
-  elements.readFullBtn?.onclick = openReader;
+  if (elements.readFullBtn) {
+    elements.readFullBtn.onclick = openReader;
+  }
+  
+  // Set reader title
+  if (elements.readerTitle) {
+    elements.readerTitle.textContent = state.currentTopic.title;
+  }
 }
 
 // Render images strip
 function renderImagesStrip() {
   if (!elements.imagesStrip || !state.currentImages.length) {
-    elements.imagesStripContainer?.style.display = 'none';
+    if (elements.imagesStripContainer) {
+      elements.imagesStripContainer.style.display = 'none';
+    }
     return;
   }
   
@@ -553,7 +620,9 @@ function renderImagesStrip() {
     elements.imagesStrip.appendChild(seeMore);
   }
   
-  elements.imagesStripContainer?.style.display = 'flex';
+  if (elements.imagesStripContainer) {
+    elements.imagesStripContainer.style.display = 'flex';
+  }
 }
 
 // Render related chips
@@ -569,8 +638,10 @@ function renderRelatedChips() {
     chip.className = 'chip';
     chip.textContent = related.title;
     chip.onclick = () => {
-      elements.searchInput.value = related.title;
-      performSearch();
+      if (elements.searchInput) {
+        elements.searchInput.value = related.title;
+        performSearch();
+      }
     };
     elements.relatedChips.appendChild(chip);
   });
@@ -578,12 +649,18 @@ function renderRelatedChips() {
 
 // Toggle quick fact
 function toggleQuickFact() {
-  if (elements.quickFact?.style.display === 'none') {
+  if (!elements.quickFact) return;
+  
+  if (elements.quickFact.style.display === 'none') {
     elements.quickFact.style.display = 'block';
-    elements.quickFactToggle.textContent = 'Hide Quick Fact';
+    if (elements.quickFactToggle) {
+      elements.quickFactToggle.textContent = 'Hide Quick Fact';
+    }
   } else {
     elements.quickFact.style.display = 'none';
-    elements.quickFactToggle.textContent = 'Show Quick Fact';
+    if (elements.quickFactToggle) {
+      elements.quickFactToggle.textContent = 'Show Quick Fact';
+    }
   }
 }
 
@@ -595,7 +672,9 @@ async function openReader() {
   
   try {
     const articleHtml = await getFullArticle(state.currentTopic.title);
-    elements.readerContent.innerHTML = articleHtml;
+    if (elements.readerContent) {
+      elements.readerContent.innerHTML = articleHtml;
+    }
     showView('reader');
     
     // Log reader event
@@ -606,11 +685,6 @@ async function openReader() {
   } finally {
     hideLoading();
   }
-}
-
-// Close reader
-function closeReader() {
-  showView('topic');
 }
 
 // Save current topic
@@ -626,8 +700,10 @@ async function saveCurrentTopic() {
   
   try {
     await saveTopic(topic);
-    elements.saveBtn.textContent = 'Saved ✓';
-    elements.saveBtn.dataset.saved = 'true';
+    if (elements.saveBtn) {
+      elements.saveBtn.textContent = 'Saved ✓';
+      elements.saveBtn.dataset.saved = 'true';
+    }
     showToast('Topic saved to library!');
     
     // Log save event
@@ -670,8 +746,10 @@ function renderTrendingChips(topics) {
     chip.className = 'chip';
     chip.textContent = topic;
     chip.onclick = () => {
-      elements.searchInput.value = topic;
-      performSearch();
+      if (elements.searchInput) {
+        elements.searchInput.value = topic;
+        performSearch();
+      }
     };
     elements.trendingChips.appendChild(chip);
   });
@@ -681,16 +759,20 @@ function renderTrendingChips(topics) {
 async function renderLibraryPreview() {
   if (!elements.libraryGrid) return;
   
-  const topics = await getTopics('', null, 6); // Get first 6
+  const topics = await getTopics('', null);
   
   elements.libraryGrid.innerHTML = '';
   
   if (topics.length === 0) {
-    elements.librarySection?.style.display = 'none';
+    if (elements.librarySection) {
+      elements.librarySection.style.display = 'none';
+    }
     return;
   }
   
-  topics.forEach(topic => {
+  // Show first 6 topics
+  const previewTopics = topics.slice(0, 6);
+  previewTopics.forEach(topic => {
     const card = document.createElement('button');
     card.className = 'library-card';
     card.onclick = () => {
@@ -726,7 +808,9 @@ async function renderLibraryPreview() {
     elements.libraryGrid.appendChild(card);
   });
   
-  elements.librarySection?.style.display = 'block';
+  if (elements.librarySection) {
+    elements.librarySection.style.display = 'block';
+  }
 }
 
 // Render library
@@ -892,18 +976,13 @@ function toggleTheme() {
   state.theme = newTheme;
   setSetting(THEME_KEY, newTheme);
   applyTheme(newTheme);
-  
-  const icon = document.getElementById('themeIcon');
-  if (icon) {
-    icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-  }
 }
 
 // Show first run modal
 function showFirstRunModal() {
   if (!elements.firstRunModal || !elements.firstRunOverlay) return;
   
-  elements.firstRunModal.style.display = 'block';
+  elements.firstRunModal.style.display = 'flex';
   elements.firstRunOverlay.style.display = 'block';
 }
 
@@ -1019,14 +1098,22 @@ function toggleHistoryPanel() {
 }
 
 function openHistoryPanel() {
-  elements.historyPanel?.classList.add('open');
-  elements.historyBtn?.classList.add('active');
+  if (elements.historyPanel) {
+    elements.historyPanel.classList.add('open');
+  }
+  if (elements.historyBtn) {
+    elements.historyBtn.classList.add('active');
+  }
   renderHistory();
 }
 
 function closeHistoryPanel() {
-  elements.historyPanel?.classList.remove('open');
-  elements.historyBtn?.classList.remove('active');
+  if (elements.historyPanel) {
+    elements.historyPanel.classList.remove('open');
+  }
+  if (elements.historyBtn) {
+    elements.historyBtn.classList.remove('active');
+  }
 }
 
 // Render history
@@ -1076,9 +1163,11 @@ function renderHistory() {
     div.appendChild(deleteBtn);
     
     div.onclick = () => {
-      elements.searchInput.value = item.query;
-      closeHistoryPanel();
-      performSearch();
+      if (elements.searchInput) {
+        elements.searchInput.value = item.query;
+        closeHistoryPanel();
+        performSearch();
+      }
     };
     
     elements.historyList.appendChild(div);
@@ -1086,9 +1175,6 @@ function renderHistory() {
 }
 
 // Voice search
-let recognition = null;
-let isListening = false;
-
 function initVoice() {
   if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
     if (elements.voiceBtn) elements.voiceBtn.style.display = 'none';
@@ -1154,9 +1240,6 @@ function timeAgo(timestamp) {
   if (d < 604800000) return `${Math.floor(d / 86400000)}d ago`;
   return new Date(timestamp).toLocaleDateString();
 }
-
-// Initialize voice on module load
-initVoice();
 
 // Export public functions
 export {

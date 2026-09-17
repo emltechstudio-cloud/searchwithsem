@@ -6,13 +6,7 @@ import { initUI } from './ui.js';
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize analytics
-  initAnalytics();
-  
-  // Initialize UI
-  await initUI();
-  
-  // Register service worker
+  // Register service worker first
   if ('serviceWorker' in navigator) {
     try {
       await navigator.serviceWorker.register('./sw.js');
@@ -21,6 +15,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Service Worker registration failed:', error);
     }
   }
+  
+  // Initialize analytics
+  initAnalytics();
+  
+  // Initialize UI
+  await initUI();
 });
 
 // Handle install prompt (for PWA)

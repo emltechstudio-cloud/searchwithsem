@@ -206,28 +206,6 @@
     </footer>
 
     <!-- Scripts -->
-    <script type="module">
-        import { initUI } from './js/ui.js';
-        import { initAnalytics } from './js/analytics.js';
-        
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize analytics
-            initAnalytics();
-            
-            // Initialize UI
-            await initUI();
-            
-            // Register service worker
-            if ('serviceWorker' in navigator) {
-                try {
-                    await navigator.serviceWorker.register('./sw.js');
-                    console.log('Service Worker registered');
-                } catch (error) {
-                    console.warn('Service Worker registration failed:', error);
-                }
-            }
-        });
-    </script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
