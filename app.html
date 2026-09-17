@@ -34,7 +34,10 @@
             </div>
             <div class="header-status">
                 <span class="online-indicator" id="onlineIndicator" title="Online">●</span>
-                <span id="autoSaveIndicator">Auto-Save: OFF</span>
+                <div class="auto-save-indicator" id="autoSaveIndicator">
+                    <span class="toggle-text">OFF</span>
+                    <div class="toggle-switch"></div>
+                </div>
             </div>
         </div>
         <div class="search-wrap">
@@ -58,7 +61,10 @@
                 <span class="c1">S</span><span class="c2">e</span><span class="c3">a</span><span class="c4">r</span><span class="c5">c</span><span class="c6">h</span>
             </div>
             <div class="home-sub">with SEM</div>
-            <div class="home-sub" style="font-size: 14px; margin-top: 4px;">Search once. Read later.</div>
+            <div class="home-tagline">Search once. Read later.</div>
+
+            <!-- Stats Section -->
+            <div class="stats-section"></div>
 
             <!-- Your Library Section -->
             <div class="library-section">
@@ -122,7 +128,9 @@
 
             <!-- User Note -->
             <div class="user-note-section">
-                <label class="user-note-label">My Note</label>
+                <label class="user-note-label">
+                    <i class="fas fa-sticky-note"></i> My Note
+                </label>
                 <textarea class="user-note" id="userNote" placeholder="Add your personal notes here..."></textarea>
             </div>
         </div>
@@ -180,6 +188,15 @@
         <div class="history-body" id="historyList"></div>
     </div>
 
+    <!-- Achievements Panel -->
+    <div class="achievements-panel" id="achievementsPanel">
+        <div class="achievements-head">
+            <h3><i class="fas fa-trophy"></i> Achievements</h3>
+            <button class="txt-btn" id="closeAchievementsBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="achievements-body" id="achievementsList"></div>
+    </div>
+
     <!-- First Run Modal -->
     <div class="first-run-overlay" id="firstRunOverlay"></div>
     <div class="first-run-modal" id="firstRunModal">
@@ -202,6 +219,7 @@
         <button class="footer-btn active" id="homeBtn"><i class="fas fa-home"></i><span>Home</span></button>
         <button class="footer-btn" id="libraryBtn"><i class="fas fa-book"></i><span>Library</span></button>
         <button class="footer-btn" id="historyBtn"><i class="fas fa-history"></i><span>History</span></button>
+        <button class="footer-btn" id="achievementsBtn"><i class="fas fa-trophy"></i><span>Achievements</span></button>
         <button class="footer-btn" id="themeBtn"><i class="fas fa-moon" id="themeIcon"></i><span>Theme</span></button>
     </footer>
 

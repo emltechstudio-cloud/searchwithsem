@@ -1,5 +1,7 @@
-// Search with SEM - Bundled Version
-// This file combines all modules into one for file:// protocol compatibility
+// ============================================
+// Search with SEM - Complete Modern Bundle
+// Version 3.0.0 - Modern UI, Gamification, Offline-First
+// ============================================
 
 // ============================================
 // Configuration
@@ -11,8 +13,16 @@ const AUTO_SAVE_KEY = "sem-auto-save";
 const THEME_KEY = "sem-theme";
 const VISITOR_ID_KEY = "sem-visitor-id";
 const EVENT_QUEUE_KEY = "sem-event-queue";
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 const USER_AGENT = `SearchWithSEM/${APP_VERSION}`;
+
+// Gamification Keys
+const STREAK_KEY = "sem-streak";
+const LAST_ACTIVE_DATE_KEY = "sem-last-active";
+const ACHIEVEMENTS_KEY = "sem-achievements";
+const TOTAL_READS_KEY = "sem-total-reads";
+const TOTAL_SAVES_KEY = "sem-total-saves";
+const TOTAL_SHARES_KEY = "sem-total-shares";
 
 const WIKI_ENDPOINTS = {
   summary: (title) => `${WIKI_API}/page/summary/${encodeURIComponent(title)}`,
@@ -25,7 +35,7 @@ const WIKI_ENDPOINTS = {
     const d = String(now.getDate()).padStart(2, '0');
     return `${WIKI_API}/feed/featured/${y}/${m}/${d}`;
   },
-  fullArticle: (title) => `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+  fullArticle: (title) => `${WIKI_API}/page/html/${encodeURIComponent(title)}`
 };
 
 const DDG_ENDPOINTS = {
@@ -157,6 +167,237 @@ function initAnalytics() {
 }
 
 // ============================================
+// Gamification System
+// ============================================
+const ACHIEVEMENTS = {
+  FIRST_SEARCH: { id: 'first_search', name: 'First Search', description: 'Perform your first search', icon: '🔍', points: 10 },
+  FIRST_SAVE: { id: 'first_save', name: 'First Save', description: 'Save your first topic', icon: '💾', points: 20 },
+  FIRST_SHARE: { id: 'first_share', name: 'First Share', description: 'Share your first topic', icon: '📤', points: 15 },
+  READER_EXPLORER: { id: 'reader_explorer', name: 'Reader Explorer', description: 'Read 5 full articles', icon: '📚', points: 50, target: 5 },
+  LIBRARY_BUILDER: { id: 'library_builder', name: 'Library Builder', description: 'Save 10 topics', icon: '📚', points: 75, target: 10 },
+  SHARE_ENTHUSIAST: { id: 'share_enthusiast', name: 'Share Enthusiast', description: 'Share 5 topics', icon: '🌟', points: 40, target: 5 },
+  WEEKLY_STREAK: { id: 'weekly_streak', name: 'Weekly Streak', description: 'Use the app for 7 consecutive days', icon: '🔥', points: 100, target: 7 },
+  MONTHLY_STREAK: { id: 'monthly_streak', name: 'Monthly Streak', description: 'Use the app for 30 consecutive days', icon: '🔥🔥', points: 300, target: 30 },
+  NIGHT_OWL: { id: 'night_owl', name: 'Night Owl', description: 'Use the app at night (9pm-12am)', icon: '🦉', points: 25 },
+  EARLY_BIRD: { id: 'early_bird', name: 'Early Bird', description: 'Use the app in the morning (5am-9am)', icon: '🐦', points: 25 }
+};
+
+function getAchievements() {
+  try {
+    const achievements = localStorage.getItem(ACHIEVEMENTS_KEY);
+    return achievements ? JSON.parse(achievements) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAchievements(achievements) {
+  try {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+  } catch (error) {
+    console.error('Failed to save achievements:', error);
+  }
+}
+
+function getStreak() {
+  try {
+    return parseInt(localStorage.getItem(STREAK_KEY) || '0');
+  } catch {
+    return 0;
+  }
+}
+
+function saveStreak(streak) {
+  try {
+    localStorage.setItem(STREAK_KEY, streak.toString());
+  } catch (error) {
+    console.error('Failed to save streak:', error);
+  }
+}
+
+function getLastActiveDate() {
+  try {
+    return localStorage.getItem(LAST_ACTIVE_DATE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function saveLastActiveDate(date) {
+  try {
+    localStorage.setItem(LAST_ACTIVE_DATE_KEY, date);
+  } catch (error) {
+    console.error('Failed to save last active date:', error);
+  }
+}
+
+function getTotalReads() {
+  try {
+    return parseInt(localStorage.getItem(TOTAL_READS_KEY) || '0');
+  } catch {
+    return 0;
+  }
+}
+
+function incrementTotalReads() {
+  try {
+    const reads = getTotalReads() + 1;
+    localStorage.setItem(TOTAL_READS_KEY, reads.toString());
+    return reads;
+  } catch {
+    return getTotalReads();
+  }
+}
+
+function getTotalSaves() {
+  try {
+    return parseInt(localStorage.getItem(TOTAL_SAVES_KEY) || '0');
+  } catch {
+    return 0;
+  }
+}
+
+function incrementTotalSaves() {
+  try {
+    const saves = getTotalSaves() + 1;
+    localStorage.setItem(TOTAL_SAVES_KEY, saves.toString());
+    return saves;
+  } catch {
+    return getTotalSaves();
+  }
+}
+
+function getTotalShares() {
+  try {
+    return parseInt(localStorage.getItem(TOTAL_SHARES_KEY) || '0');
+  } catch {
+    return 0;
+  }
+}
+
+function incrementTotalShares() {
+  try {
+    const shares = getTotalShares() + 1;
+    localStorage.setItem(TOTAL_SHARES_KEY, shares.toString());
+    return shares;
+  } catch {
+    return getTotalShares();
+  }
+}
+
+function updateStreak() {
+  const today = new Date().toISOString().split('T')[0];
+  const lastActive = getLastActiveDate();
+  
+  if (!lastActive) {
+    // First time
+    saveStreak(1);
+    saveLastActiveDate(today);
+    return 1;
+  }
+  
+  const lastDate = new Date(lastActive);
+  const todayDate = new Date(today);
+  const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 1) {
+    // Consecutive day
+    const newStreak = getStreak() + 1;
+    saveStreak(newStreak);
+    saveLastActiveDate(today);
+    return newStreak;
+  } else if (diffDays === 0) {
+    // Same day
+    return getStreak();
+  } else {
+    // Reset streak
+    saveStreak(1);
+    saveLastActiveDate(today);
+    return 1;
+  }
+}
+
+function checkAchievements(action, data = {}) {
+  const achievements = getAchievements();
+  const newAchievements = [];
+  
+  switch (action) {
+    case 'search':
+      if (!achievements.first_search) {
+        achievements.first_search = true;
+        newAchievements.push(ACHIEVEMENTS.FIRST_SEARCH);
+      }
+      break;
+    case 'save':
+      if (!achievements.first_save) {
+        achievements.first_save = true;
+        newAchievements.push(ACHIEVEMENTS.FIRST_SAVE);
+      }
+      {
+        const totalSaves = getTotalSaves() + 1;
+        if (totalSaves >= 10 && !achievements.library_builder) {
+          achievements.library_builder = true;
+          newAchievements.push(ACHIEVEMENTS.LIBRARY_BUILDER);
+        }
+      }
+      break;
+    case 'share':
+      if (!achievements.first_share) {
+        achievements.first_share = true;
+        newAchievements.push(ACHIEVEMENTS.FIRST_SHARE);
+      }
+      {
+        const totalShares = getTotalShares() + 1;
+        if (totalShares >= 5 && !achievements.share_enthusiast) {
+          achievements.share_enthusiast = true;
+          newAchievements.push(ACHIEVEMENTS.SHARE_ENTHUSIAST);
+        }
+      }
+      break;
+    case 'reader':
+      {
+        const totalReads = getTotalReads() + 1;
+        if (totalReads >= 5 && !achievements.reader_explorer) {
+          achievements.reader_explorer = true;
+          newAchievements.push(ACHIEVEMENTS.READER_EXPLORER);
+        }
+      }
+      break;
+    case 'daily':
+      {
+        const streak = getStreak();
+        if (streak >= 7 && !achievements.weekly_streak) {
+          achievements.weekly_streak = true;
+          newAchievements.push(ACHIEVEMENTS.WEEKLY_STREAK);
+        }
+        if (streak >= 30 && !achievements.monthly_streak) {
+          achievements.monthly_streak = true;
+          newAchievements.push(ACHIEVEMENTS.MONTHLY_STREAK);
+        }
+      }
+      break;
+  }
+  
+  // Check time-based achievements
+  const hour = new Date().getHours();
+  if (hour >= 21 && hour <= 23 && !achievements.night_owl) {
+    achievements.night_owl = true;
+    newAchievements.push(ACHIEVEMENTS.NIGHT_OWL);
+  } else if (hour >= 5 && hour <= 9 && !achievements.early_bird) {
+    achievements.early_bird = true;
+    newAchievements.push(ACHIEVEMENTS.EARLY_BIRD);
+  }
+  
+  if (newAchievements.length > 0) {
+    saveAchievements(achievements);
+    return newAchievements;
+  }
+  
+  saveAchievements(achievements);
+  return [];
+}
+
+// ============================================
 // Store Module
 // ============================================
 const DB_NAME = 'SearchWithSEM';
@@ -167,7 +408,7 @@ let dbPromise = null;
 function getDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 2);
+      const request = indexedDB.open(DB_NAME, 3);
       request.onerror = reject;
       request.onsuccess = () => resolve(request.result);
       request.onupgradeneeded = (e) => {
@@ -176,6 +417,7 @@ function getDB() {
           const store = db.createObjectStore(TOPICS_STORE, { keyPath: 'id' });
           store.createIndex('title', 'title', { unique: false });
           store.createIndex('savedAt', 'savedAt', { unique: false });
+          store.createIndex('tags', 'tags', { multiEntry: true });
         }
         if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
           db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
@@ -193,6 +435,7 @@ async function saveTopic(topic) {
     id: topic.id || crypto.randomUUID(),
     title: topic.title,
     summary: topic.summary || '',
+    fullArticle: topic.fullArticle || '',
     coverImage: topic.coverImage || '',
     url: topic.url || '',
     tags: topic.tags || [],
@@ -223,11 +466,12 @@ async function getTopics(query = '', tag = null) {
         topics = topics.filter(t => 
           t.title.toLowerCase().includes(queryLower) ||
           t.note.toLowerCase().includes(queryLower) ||
-          t.summary.toLowerCase().includes(queryLower)
+          t.summary.toLowerCase().includes(queryLower) ||
+          (t.tags && t.tags.some(tag => tag.toLowerCase().includes(queryLower)))
         );
       }
       if (tag) {
-        topics = topics.filter(t => t.tags.includes(tag));
+        topics = topics.filter(t => t.tags && t.tags.includes(tag));
       }
       resolve(topics);
     };
@@ -248,6 +492,16 @@ async function deleteTopic(id) {
 async function isTopicSaved(title) {
   const topics = await getTopics();
   return topics.some(t => t.title === title);
+}
+
+async function getTopicById(id) {
+  const db = await getDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(TOPICS_STORE, 'readonly');
+    const request = tx.objectStore(TOPICS_STORE).get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
 }
 
 async function getSetting(key, defaultValue = null) {
@@ -273,7 +527,13 @@ async function setSetting(key, value) {
 function getCache(key) {
   try {
     const data = localStorage.getItem(`sem-cache-${key}`);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    const parsed = JSON.parse(data);
+    if (parsed.expires && Date.now() > parsed.expires) {
+      localStorage.removeItem(`sem-cache-${key}`);
+      return null;
+    }
+    return parsed.value;
   } catch {
     return null;
   }
@@ -425,10 +685,11 @@ async function getFullArticle(title) {
   if (cached) return cached;
   
   try {
-    const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(title)}`, {
+    const response = await fetch(WIKI_ENDPOINTS.fullArticle(title), {
       headers: { 'User-Agent': USER_AGENT }
     });
     if (!response.ok) {
+      // Fallback to mobile version
       const mobileResponse = await fetch(`https://en.m.wikipedia.org/wiki/${encodeURIComponent(title)}?printable=yes`, {
         headers: { 'User-Agent': USER_AGENT }
       });
@@ -439,7 +700,14 @@ async function getFullArticle(title) {
       }
       throw new Error('Failed to fetch article');
     }
-    const html = await response.text();
+    let html = await response.text();
+    
+    // Clean up the HTML for better display
+    html = html.replace(/<style[^>]*>.*?<\/style>/gsi, '');
+    html = html.replace(/<script[^>]*>.*?<\/script>/gsi, '');
+    html = html.replace(/<link[^>]*>/gi, '');
+    html = html.replace(/<meta[^>]*>/gi, '');
+    
     setCache(cacheKey, html, CACHE_TTL);
     return html;
   } catch (error) {
@@ -475,7 +743,7 @@ async function getTrendingTopics() {
 }
 
 function fallbackTrending() {
-  return ['Artificial Intelligence', 'Climate Change', 'Quantum Physics', 'Solar System', 'DNA', 'Ancient Rome'];
+  return ['Artificial Intelligence', 'Climate Change', 'Quantum Physics', 'Solar System', 'DNA', 'Ancient Rome', 'Machine Learning', 'Blockchain', 'Renewable Energy', 'Human Brain'];
 }
 
 async function getCoverImage(title) {
@@ -525,11 +793,16 @@ async function shareTopic(topic) {
     if (navigator.share) {
       await navigator.share(shareData);
       logEvent(EVENT_TYPES.SEM_SHARE, { topic: topic.title });
+      incrementTotalShares();
+      checkAchievements('share');
+      showToast('Shared successfully!');
       return;
     }
     await navigator.clipboard.writeText(shareData.text + '\n' + shareData.url);
     showToast('Link copied to clipboard! Share it anywhere.');
     logEvent(EVENT_TYPES.SEM_SHARE, { topic: topic.title, method: 'clipboard' });
+    incrementTotalShares();
+    checkAchievements('share');
   } catch (error) {
     if (error.name !== 'AbortError') {
       try {
@@ -554,7 +827,14 @@ let state = {
   lbIndex: 0,
   isOnline: navigator.onLine,
   autoSave: false,
-  theme: 'light'
+  theme: 'light',
+  stats: {
+    streak: 0,
+    totalReads: 0,
+    totalSaves: 0,
+    totalShares: 0,
+    achievements: []
+  }
 };
 
 let elements = {};
@@ -578,8 +858,10 @@ function cacheElements() {
     homeScreen: document.getElementById('homeScreen'),
     homeLogo: document.getElementById('homeLogo'),
     homeSub: document.querySelector('.home-sub'),
+    homeTagline: document.querySelector('.home-tagline'),
     librarySection: document.querySelector('.library-section'),
     libraryGrid: document.getElementById('libraryGrid'),
+    statsSection: document.querySelector('.stats-section'),
     trendingSection: document.querySelector('.trending-section'),
     trendingChips: document.getElementById('trendingChips'),
     topicScreen: document.getElementById('topicScreen'),
@@ -619,6 +901,10 @@ function cacheElements() {
     historyBtn: document.getElementById('historyBtn'),
     themeBtn: document.getElementById('themeBtn'),
     themeIcon: document.getElementById('themeIcon'),
+    achievementsBtn: document.getElementById('achievementsBtn'),
+    achievementsPanel: document.getElementById('achievementsPanel'),
+    achievementsList: document.getElementById('achievementsList'),
+    closeAchievementsBtn: document.getElementById('closeAchievementsBtn'),
     historyPanel: document.getElementById('historyPanel'),
     historyList: document.getElementById('historyList'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
@@ -633,14 +919,36 @@ function cacheElements() {
 async function loadSettings() {
   state.autoSave = (await getSetting(AUTO_SAVE_KEY, false)) === true;
   state.theme = await getSetting(THEME_KEY, 'light');
+  state.stats.streak = getStreak();
+  state.stats.totalReads = getTotalReads();
+  state.stats.totalSaves = getTotalSaves();
+  state.stats.totalShares = getTotalShares();
+  state.stats.achievements = Object.keys(getAchievements());
+  
   applyTheme(state.theme);
-  if (elements.autoSaveIndicator) {
-    elements.autoSaveIndicator.textContent = state.autoSave ? 'Auto-Save: ON' : 'Auto-Save: OFF';
-  }
+  updateAutoSaveIndicator();
+  
   const firstRun = await getSetting('firstRun', true);
   if (firstRun) {
     showFirstRunModal();
     await setSetting('firstRun', false);
+  }
+  
+  // Update streak on app open
+  const newStreak = updateStreak();
+  if (newStreak !== state.stats.streak) {
+    state.stats.streak = newStreak;
+    checkAchievements('daily');
+  }
+  
+  // Log app open event
+  logEvent(EVENT_TYPES.SEM_OPEN);
+}
+
+function updateAutoSaveIndicator() {
+  if (elements.autoSaveIndicator) {
+    elements.autoSaveIndicator.classList.toggle('on', state.autoSave);
+    elements.autoSaveIndicator.querySelector('.toggle-text').textContent = state.autoSave ? 'ON' : 'OFF';
   }
 }
 
@@ -656,6 +964,11 @@ function applyTheme(theme) {
 }
 
 function setupEventListeners() {
+  // Auto-save toggle
+  if (elements.autoSaveIndicator) {
+    elements.autoSaveIndicator.addEventListener('click', toggleAutoSave);
+  }
+  
   if (elements.searchInput) {
     elements.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') performSearch();
@@ -674,7 +987,10 @@ function setupEventListeners() {
     elements.libraryBtn.addEventListener('click', () => showView('library'));
   }
   if (elements.historyBtn) {
-    elements.historyBtn.addEventListener('click', () => toggleHistoryPanel());
+    elements.historyBtn.addEventListener('click', toggleHistoryPanel);
+  }
+  if (elements.achievementsBtn) {
+    elements.achievementsBtn.addEventListener('click', toggleAchievementsPanel);
   }
   if (elements.themeBtn) {
     elements.themeBtn.addEventListener('click', toggleTheme);
@@ -720,6 +1036,8 @@ function setupEventListeners() {
       if (e.target === elements.lightbox) closeLightbox();
     });
   }
+  
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (elements.lightbox?.classList.contains('active')) {
       if (e.key === 'ArrowLeft') shiftLb(-1);
@@ -727,8 +1045,11 @@ function setupEventListeners() {
       else if (e.key === 'Escape') closeLightbox();
     } else if (e.key === 'Escape') {
       closeHistoryPanel();
+      closeAchievementsPanel();
     }
   });
+  
+  // Lightbox touch gestures
   let touchX = 0;
   if (elements.lightbox) {
     elements.lightbox.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
@@ -737,12 +1058,19 @@ function setupEventListeners() {
       if (Math.abs(diff) > 48) shiftLb(diff > 0 ? 1 : -1);
     });
   }
+  
+  // Close panels when clicking outside
   document.addEventListener('click', (e) => {
     if (elements.historyPanel && !elements.historyPanel.contains(e.target) && 
         e.target !== elements.historyBtn && !elements.historyBtn?.contains(e.target)) {
       closeHistoryPanel();
     }
+    if (elements.achievementsPanel && !elements.achievementsPanel.contains(e.target) && 
+        e.target !== elements.achievementsBtn && !elements.achievementsBtn?.contains(e.target)) {
+      closeAchievementsPanel();
+    }
   });
+  
   if (elements.librarySearch) {
     elements.librarySearch.addEventListener('input', (e) => renderLibrary(e.target.value));
   }
@@ -759,7 +1087,7 @@ function setupEventListeners() {
       state.autoSave = true;
       setSetting(AUTO_SAVE_KEY, true);
       closeFirstRunModal();
-      if (elements.autoSaveIndicator) elements.autoSaveIndicator.textContent = 'Auto-Save: ON';
+      updateAutoSaveIndicator();
     });
   }
   if (elements.firstRunNo) {
@@ -781,6 +1109,11 @@ function setupEventListeners() {
   if (elements.closeHistoryBtn) {
     elements.closeHistoryBtn.addEventListener('click', closeHistoryPanel);
   }
+  if (elements.closeAchievementsBtn) {
+    elements.closeAchievementsBtn.addEventListener('click', closeAchievementsPanel);
+  }
+  
+  // Online/offline events
   window.addEventListener('online', () => {
     state.isOnline = true;
     updateOnlineIndicator();
@@ -791,6 +1124,20 @@ function setupEventListeners() {
     updateOnlineIndicator();
     showToast('Offline - using cached data');
   });
+  
+  // Scroll effect for header
+  window.addEventListener('scroll', () => {
+    if (elements.header) {
+      elements.header.classList.toggle('scrolled', window.scrollY > 10);
+    }
+  });
+}
+
+function toggleAutoSave() {
+  state.autoSave = !state.autoSave;
+  setSetting(AUTO_SAVE_KEY, state.autoSave);
+  updateAutoSaveIndicator();
+  showToast(`Auto-save ${state.autoSave ? 'enabled' : 'disabled'}`);
 }
 
 function debounceAutoSave() {
@@ -804,6 +1151,33 @@ async function initViews() {
   await loadTrending();
   await renderLibraryPreview();
   renderHistory();
+  renderStats();
+}
+
+function renderStats() {
+  if (!elements.statsSection) return;
+  
+  elements.statsSection.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value streak-indicator">
+        ${state.stats.streak}
+        <span class="fire-icon">🔥</span>
+      </div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${state.stats.totalReads}</div>
+      <div class="stat-label">Reads</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${state.stats.totalSaves}</div>
+      <div class="stat-label">Saves</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${state.stats.totalShares}</div>
+      <div class="stat-label">Shares</div>
+    </div>
+  `;
 }
 
 function showView(view) {
@@ -813,9 +1187,13 @@ function showView(view) {
     if (el) el.style.display = 'none';
   });
   state.currentView = view;
+  
   switch (view) {
     case 'home':
-      if (elements.homeScreen) elements.homeScreen.style.display = 'flex';
+      if (elements.homeScreen) {
+        elements.homeScreen.style.display = 'flex';
+        renderStats();
+      }
       setActiveFooter('home');
       break;
     case 'topic':
@@ -840,9 +1218,9 @@ function showView(view) {
 
 function setActiveFooter(button) {
   if (!elements.footer) return;
-  const buttons = [elements.homeBtn, elements.libraryBtn, elements.historyBtn, elements.themeBtn];
+  const buttons = [elements.homeBtn, elements.libraryBtn, elements.historyBtn, elements.themeBtn, elements.achievementsBtn];
   buttons.forEach(btn => { if (btn) btn.classList.remove('active'); });
-  const activeBtn = { home: elements.homeBtn, library: elements.libraryBtn, history: elements.historyBtn, theme: elements.themeBtn }[button];
+  const activeBtn = { home: elements.homeBtn, library: elements.libraryBtn, history: elements.historyBtn, theme: elements.themeBtn, achievements: elements.achievementsBtn }[button];
   if (activeBtn) activeBtn.classList.add('active');
 }
 
@@ -850,11 +1228,14 @@ async function performSearch() {
   if (!elements.searchInput) return;
   const query = elements.searchInput.value.trim();
   if (!query) { showToast('Enter something to search'); return; }
+  
   showLoading('Searching Wikipedia...');
+  
   try {
     addToHistory(query);
     renderHistory();
     localStorage.setItem('lastSearch', query);
+    
     const wikiData = await searchWikipedia(query);
     const [images, related, instantAnswer, coverImage] = await Promise.all([
       getImages(wikiData.title || query),
@@ -862,9 +1243,17 @@ async function performSearch() {
       getInstantAnswer(query),
       getCoverImage(wikiData.title || query)
     ]);
+    
+    // Fetch full article for saving
+    let fullArticle = '';
+    if (state.autoSave) {
+      fullArticle = await getFullArticle(wikiData.title || query);
+    }
+    
     state.currentTopic = {
       title: wikiData.title || query,
       summary: wikiData.extract || 'No summary available.',
+      fullArticle,
       url: wikiData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiData.title || query)}`,
       coverImage
     };
@@ -872,11 +1261,17 @@ async function performSearch() {
     state.currentRelated = related;
     state.currentNote = '';
     state.lbIndex = 0;
+    
     const isSaved = await isTopicSaved(state.currentTopic.title);
     renderTopicView(instantAnswer, isSaved);
     showView('topic');
+    
     logEvent(EVENT_TYPES.SEM_SEARCH);
-    if (state.autoSave) saveCurrentTopic();
+    checkAchievements('search');
+    
+    if (state.autoSave) {
+      saveCurrentTopic();
+    }
   } catch (error) {
     console.error('Search failed:', error);
     showToast('Nothing found. Try a different search.');
@@ -894,23 +1289,37 @@ function renderTopicView(instantAnswer, isSaved) {
       elements.topicCover.style.display = 'none';
     }
   }
+  
   if (elements.topicTitle) elements.topicTitle.textContent = state.currentTopic.title;
-  if (elements.topicSubtitle) elements.topicSubtitle.textContent = instantAnswer ? 'Quick Fact Available' : '';
+  
+  // Only show quick fact if it exists, don't duplicate with summary
   if (instantAnswer && elements.quickFactContent) {
     elements.quickFactContent.textContent = instantAnswer;
     if (elements.quickFact) elements.quickFact.style.display = 'block';
     if (elements.quickFactToggle) elements.quickFactToggle.textContent = 'Hide Quick Fact';
+    if (elements.wikiSummary) elements.wikiSummary.style.display = 'none';
   } else {
     if (elements.quickFact) elements.quickFact.style.display = 'none';
+    if (elements.wikiSummary) {
+      elements.wikiSummary.style.display = 'block';
+      elements.wikiSummary.innerHTML = `<p>${state.currentTopic.summary}</p>`;
+    }
   }
-  if (elements.wikiSummary) elements.wikiSummary.innerHTML = `<p>${state.currentTopic.summary}</p>`;
+  
+  if (elements.topicSubtitle) {
+    elements.topicSubtitle.textContent = instantAnswer ? 'Quick Fact Available' : state.currentTopic.summary.substring(0, 100) + '...';
+  }
+  
   renderImagesStrip();
   renderRelatedChips();
+  
   if (elements.userNote) elements.userNote.value = state.currentNote;
+  
   if (elements.saveBtn) {
     elements.saveBtn.textContent = isSaved ? 'Saved ✓' : 'Save';
     elements.saveBtn.dataset.saved = isSaved.toString();
   }
+  
   if (elements.readerTitle) elements.readerTitle.textContent = state.currentTopic.title;
 }
 
@@ -919,18 +1328,23 @@ function renderImagesStrip() {
     if (elements.imagesStripContainer) elements.imagesStripContainer.style.display = 'none';
     return;
   }
+  
   elements.imagesStrip.innerHTML = '';
   const previewImages = state.currentImages.slice(0, 4);
+  
   previewImages.forEach((img, i) => {
     const imgEl = document.createElement('img');
     imgEl.src = img.src;
     imgEl.alt = img.title || '';
     imgEl.loading = 'lazy';
     imgEl.style.cursor = 'pointer';
+    imgEl.style.objectFit = 'contain';
+    imgEl.style.background = 'var(--bg-secondary)';
     imgEl.onerror = () => { imgEl.style.display = 'none'; };
     imgEl.onclick = () => openLightbox(i);
     elements.imagesStrip.appendChild(imgEl);
   });
+  
   if (state.currentImages.length > 4) {
     const seeMore = document.createElement('button');
     seeMore.className = 'see-more-btn';
@@ -938,6 +1352,7 @@ function renderImagesStrip() {
     seeMore.onclick = () => openLightbox(4);
     elements.imagesStrip.appendChild(seeMore);
   }
+  
   if (elements.imagesStripContainer) elements.imagesStripContainer.style.display = 'flex';
 }
 
@@ -963,20 +1378,34 @@ function toggleQuickFact() {
   if (elements.quickFact.style.display === 'none') {
     elements.quickFact.style.display = 'block';
     if (elements.quickFactToggle) elements.quickFactToggle.textContent = 'Hide Quick Fact';
+    if (elements.wikiSummary) elements.wikiSummary.style.display = 'none';
   } else {
     elements.quickFact.style.display = 'none';
     if (elements.quickFactToggle) elements.quickFactToggle.textContent = 'Show Quick Fact';
+    if (elements.wikiSummary) elements.wikiSummary.style.display = 'block';
   }
 }
 
 async function openReader() {
   if (!state.currentTopic) return;
   showLoading('Loading article...');
+  
   try {
-    const articleHtml = await getFullArticle(state.currentTopic.title);
-    if (elements.readerContent) elements.readerContent.innerHTML = articleHtml;
+    // Use cached full article if available
+    let articleHtml = state.currentTopic.fullArticle;
+    if (!articleHtml) {
+      articleHtml = await getFullArticle(state.currentTopic.title);
+    }
+    
+    if (elements.readerContent) {
+      elements.readerContent.innerHTML = articleHtml;
+    }
+    
     showView('reader');
     logEvent(EVENT_TYPES.SEM_READER, { topic: state.currentTopic.title });
+    incrementTotalReads();
+    checkAchievements('reader');
+    renderStats();
   } catch (error) {
     console.error('Failed to load article:', error);
     showToast('Unable to load article. Please check your internet connection.');
@@ -987,7 +1416,21 @@ async function openReader() {
 
 async function saveCurrentTopic() {
   if (!state.currentTopic) return;
-  const topic = { ...state.currentTopic, note: state.currentNote, isAutoSaved: state.autoSave, tags: [] };
+  
+  // If full article is not cached, fetch it
+  let fullArticle = state.currentTopic.fullArticle;
+  if (!fullArticle) {
+    fullArticle = await getFullArticle(state.currentTopic.title);
+  }
+  
+  const topic = { 
+    ...state.currentTopic, 
+    fullArticle,
+    note: state.currentNote, 
+    isAutoSaved: state.autoSave, 
+    tags: [] 
+  };
+  
   try {
     await saveTopic(topic);
     if (elements.saveBtn) {
@@ -996,6 +1439,9 @@ async function saveCurrentTopic() {
     }
     showToast('Topic saved to library!');
     logEvent(EVENT_TYPES.SEM_SAVE, { topic: topic.title });
+    incrementTotalSaves();
+    checkAchievements('save');
+    renderStats();
     await renderLibraryPreview();
   } catch (error) {
     console.error('Failed to save topic:', error);
@@ -1014,7 +1460,7 @@ async function loadTrending() {
     renderTrendingChips(topics);
   } catch (error) {
     console.error('Failed to load trending:', error);
-    renderTrendingChips(['Artificial Intelligence', 'Climate Change', 'Quantum Physics', 'Solar System']);
+    renderTrendingChips(fallbackTrending());
   }
 }
 
@@ -1039,10 +1485,12 @@ async function renderLibraryPreview() {
   if (!elements.libraryGrid) return;
   const topics = await getTopics('', null);
   elements.libraryGrid.innerHTML = '';
+  
   if (topics.length === 0) {
     if (elements.librarySection) elements.librarySection.style.display = 'none';
     return;
   }
+  
   const previewTopics = topics.slice(0, 6);
   previewTopics.forEach(topic => {
     const card = document.createElement('button');
@@ -1055,22 +1503,31 @@ async function renderLibraryPreview() {
       renderTopicView(null, true);
       showView('topic');
     };
+    
     const img = document.createElement('img');
-    img.src = topic.coverImage || 'assets/fallback.svg';
+    img.src = topic.coverImage || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%23999" font-size="14">No Image</text></svg>';
     img.alt = topic.title;
     img.loading = 'lazy';
-    img.onerror = () => { img.src = 'assets/fallback.svg'; };
+    img.style.objectFit = 'cover';
+    img.style.background = 'var(--bg-secondary)';
+    img.onerror = () => { 
+      img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%23999" font-size="14">No Image</text></svg>';
+    };
+    
     const title = document.createElement('div');
     title.className = 'library-card-title';
     title.textContent = topic.title;
+    
     const date = document.createElement('div');
     date.className = 'library-card-date';
     date.textContent = new Date(topic.savedAt).toLocaleDateString();
+    
     card.appendChild(img);
     card.appendChild(title);
     card.appendChild(date);
     elements.libraryGrid.appendChild(card);
   });
+  
   if (elements.librarySection) elements.librarySection.style.display = 'block';
 }
 
@@ -1078,30 +1535,43 @@ async function renderLibrary(query = '', tag = null) {
   if (!elements.libraryResults) return;
   const topics = await getTopics(query, tag);
   elements.libraryResults.innerHTML = '';
+  
   if (topics.length === 0) {
     elements.libraryResults.innerHTML = '<div class="empty-state"><i class="fas fa-book"></i><p>No topics found.</p></div>';
     return;
   }
+  
   topics.forEach(topic => {
     const card = document.createElement('div');
     card.className = 'library-item';
+    
     const img = document.createElement('img');
-    img.src = topic.coverImage || 'assets/fallback.svg';
+    img.src = topic.coverImage || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%23f0f0f0" width="80" height="80"/><text x="40" y="45" text-anchor="middle" fill="%23999" font-size="10">No Image</text></svg>';
     img.alt = topic.title;
     img.loading = 'lazy';
-    img.onerror = () => { img.src = 'assets/fallback.svg'; };
+    img.style.objectFit = 'cover';
+    img.style.background = 'var(--bg-secondary)';
+    img.onerror = () => { 
+      img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%23f0f0f0" width="80" height="80"/><text x="40" y="45" text-anchor="middle" fill="%23999" font-size="10">No Image</text></svg>';
+    };
+    
     const info = document.createElement('div');
     info.className = 'library-item-info';
+    
     const title = document.createElement('h3');
     title.textContent = topic.title;
+    
     const date = document.createElement('div');
     date.className = 'library-item-date';
     date.textContent = new Date(topic.savedAt).toLocaleDateString();
+    
     const notePreview = document.createElement('div');
     notePreview.className = 'library-item-note';
     notePreview.textContent = topic.note ? topic.note.substring(0, 100) + (topic.note.length > 100 ? '...' : '') : 'No note';
+    
     const actions = document.createElement('div');
     actions.className = 'library-item-actions';
+    
     const viewBtn = document.createElement('button');
     viewBtn.className = 'btn-icon';
     viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
@@ -1114,10 +1584,15 @@ async function renderLibrary(query = '', tag = null) {
       renderTopicView(null, true);
       showView('topic');
     };
+    
     const shareBtn = document.createElement('button');
     shareBtn.className = 'btn-icon';
     shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
-    shareBtn.onclick = (e) => { e.stopPropagation(); shareTopic(topic); };
+    shareBtn.onclick = (e) => { 
+      e.stopPropagation(); 
+      shareTopic(topic); 
+    };
+    
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-icon btn-icon-danger';
     deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
@@ -1131,15 +1606,19 @@ async function renderLibrary(query = '', tag = null) {
         });
       }
     };
+    
     actions.appendChild(viewBtn);
     actions.appendChild(shareBtn);
     actions.appendChild(deleteBtn);
+    
     info.appendChild(title);
     info.appendChild(date);
     info.appendChild(notePreview);
+    
     card.appendChild(img);
     card.appendChild(info);
     card.appendChild(actions);
+    
     card.onclick = () => {
       state.currentTopic = topic;
       state.currentImages = [];
@@ -1148,15 +1627,28 @@ async function renderLibrary(query = '', tag = null) {
       renderTopicView(null, true);
       showView('topic');
     };
+    
     elements.libraryResults.appendChild(card);
   });
 }
 
 async function renderLibraryTags() {
   if (!elements.libraryTags) return;
-  const tags = []; // Placeholder - will implement later
+  
+  const topics = await getTopics();
+  const allTags = new Set();
+  topics.forEach(topic => {
+    if (topic.tags) {
+      topic.tags.forEach(tag => allTags.add(tag));
+    }
+  });
+  
+  const tags = Array.from(allTags).sort();
+  
   elements.libraryTags.innerHTML = '';
+  
   if (tags.length === 0) return;
+  
   const allTag = document.createElement('button');
   allTag.className = 'tag-chip active';
   allTag.textContent = 'All';
@@ -1166,6 +1658,7 @@ async function renderLibraryTags() {
     renderLibrary(elements.librarySearch?.value || '');
   };
   elements.libraryTags.appendChild(allTag);
+  
   tags.forEach(tag => {
     const tagEl = document.createElement('button');
     tagEl.className = 'tag-chip';
@@ -1200,11 +1693,9 @@ function closeFirstRunModal() {
 
 function updateOnlineIndicator() {
   if (elements.onlineIndicator) {
+    elements.onlineIndicator.classList.toggle('offline', !state.isOnline);
     elements.onlineIndicator.textContent = state.isOnline ? '●' : '○';
     elements.onlineIndicator.title = state.isOnline ? 'Online' : 'Offline';
-  }
-  if (elements.autoSaveIndicator) {
-    elements.autoSaveIndicator.textContent = state.autoSave ? 'Auto-Save: ON' : 'Auto-Save: OFF';
   }
 }
 
@@ -1223,7 +1714,6 @@ function showToast(message, duration = 3000) {
   document.querySelectorAll('.sem-toast').forEach(t => t.remove());
   const toast = document.createElement('div');
   toast.className = 'sem-toast';
-  toast.style.cssText = `position:fixed;bottom:74px;left:50%;transform:translateX(-50%);background:var(--text, #202124);color:var(--bg, #ffffff);padding:10px 18px;border-radius:8px;font-size:13px;z-index:4000;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);pointer-events:none;`;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => {
@@ -1281,6 +1771,72 @@ function closeHistoryPanel() {
   if (elements.historyBtn) elements.historyBtn.classList.remove('active');
 }
 
+function toggleAchievementsPanel() {
+  if (elements.achievementsPanel?.classList.contains('open')) closeAchievementsPanel();
+  else openAchievementsPanel();
+}
+
+function openAchievementsPanel() {
+  if (elements.achievementsPanel) elements.achievementsPanel.classList.add('open');
+  if (elements.achievementsBtn) elements.achievementsBtn.classList.add('active');
+  renderAchievements();
+}
+
+function closeAchievementsPanel() {
+  if (elements.achievementsPanel) elements.achievementsPanel.classList.remove('open');
+  if (elements.achievementsBtn) elements.achievementsBtn.classList.remove('active');
+}
+
+function renderAchievements() {
+  if (!elements.achievementsList) return;
+  
+  const achievements = getAchievements();
+  const achievementsList = Object.values(ACHIEVEMENTS);
+  
+  elements.achievementsList.innerHTML = '';
+  
+  achievementsList.forEach(achievement => {
+    const achieved = achievements[achievement.id];
+    const item = document.createElement('div');
+    item.className = `achievement-item ${achieved ? 'achieved' : 'locked'}`;
+    
+    const icon = document.createElement('div');
+    icon.className = 'achievement-icon';
+    icon.textContent = achievement.icon;
+    
+    const info = document.createElement('div');
+    info.className = 'achievement-info';
+    
+    const name = document.createElement('div');
+    name.className = 'achievement-name';
+    name.textContent = achievement.name;
+    
+    const description = document.createElement('div');
+    description.className = 'achievement-description';
+    description.textContent = achievement.description;
+    
+    const points = document.createElement('div');
+    points.className = 'achievement-points';
+    points.textContent = `+${achievement.points} XP`;
+    
+    if (achieved) {
+      const badge = document.createElement('div');
+      badge.className = 'achievement-badge';
+      badge.textContent = '✓';
+      item.appendChild(badge);
+    }
+    
+    info.appendChild(name);
+    info.appendChild(description);
+    info.appendChild(points);
+    
+    item.appendChild(icon);
+    item.appendChild(info);
+    
+    elements.achievementsList.appendChild(item);
+  });
+}
+
 function renderHistory() {
   if (!elements.historyList) return;
   const history = getHistory();
@@ -1299,107 +1855,87 @@ function renderHistory() {
     queryDiv.textContent = item.query;
     const timeDiv = document.createElement('div');
     timeDiv.className = 'history-time';
-    timeDiv.textContent = timeAgo(item.timestamp);
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'history-delete';
-    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteBtn.onclick = (e) => {
-      e.stopPropagation();
-      const newHistory = history.filter((_, index) => index !== i);
-      localStorage.setItem('sem-history', JSON.stringify(newHistory));
-      renderHistory();
-      showToast('Deleted');
-    };
+    timeDiv.textContent = new Date(item.timestamp).toLocaleString();
     textDiv.appendChild(queryDiv);
     textDiv.appendChild(timeDiv);
     div.appendChild(textDiv);
-    div.appendChild(deleteBtn);
-    div.onclick = () => {
-      if (elements.searchInput) {
-        elements.searchInput.value = item.query;
-        closeHistoryPanel();
-        performSearch();
-      }
-    };
     elements.historyList.appendChild(div);
   });
 }
 
-function initVoice() {
-  if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-    if (elements.voiceBtn) elements.voiceBtn.style.display = 'none';
+// Voice Search
+function toggleVoice() {
+  if (isListening) {
+    stopVoice();
     return;
   }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
+  
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice search not supported in your browser');
+    return;
+  }
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.lang = 'en-US';
+  
   recognition.onstart = () => {
     isListening = true;
-    if (elements.voiceBtn) elements.voiceBtn.classList.add('listening');
+    if (elements.voiceBtn) {
+      elements.voiceBtn.style.background = 'var(--error)';
+      elements.voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+    }
     showToast('Listening...');
   };
-  recognition.onresult = (e) => {
+  
+  recognition.onend = () => {
+    isListening = false;
+    if (elements.voiceBtn) {
+      elements.voiceBtn.style.background = '';
+      elements.voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+  };
+  
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
     if (elements.searchInput) {
-      elements.searchInput.value = e.results[0][0].transcript;
+      elements.searchInput.value = transcript;
       performSearch();
     }
   };
-  recognition.onerror = stopVoice;
-  recognition.onend = stopVoice;
-}
-
-function toggleVoice() {
-  if (!recognition) { showToast('Voice search not supported'); return; }
-  if (isListening) stopVoice();
-  else try { recognition.start(); } catch {}
+  
+  recognition.onerror = (event) => {
+    isListening = false;
+    if (elements.voiceBtn) {
+      elements.voiceBtn.style.background = '';
+      elements.voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+    if (event.error !== 'no-speech') {
+      showToast(`Voice error: ${event.error}`);
+    }
+  };
+  
+  recognition.start();
 }
 
 function stopVoice() {
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+  }
   isListening = false;
-  if (elements.voiceBtn) elements.voiceBtn.classList.remove('listening');
-  try { recognition?.stop(); } catch {}
-}
-
-function timeAgo(timestamp) {
-  const d = Date.now() - timestamp;
-  if (d < 60000) return 'Just now';
-  if (d < 3600000) return `${Math.floor(d / 60000)}m ago`;
-  if (d < 86400000) return `${Math.floor(d / 3600000)}h ago`;
-  if (d < 604800000) return `${Math.floor(d / 86400000)}d ago`;
-  return new Date(timestamp).toLocaleDateString();
 }
 
 // ============================================
-// Initialize Application
+// Main Entry Point
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize analytics
-  initAnalytics();
-  
-  // Cache DOM elements
   cacheElements();
-  
-  // Load settings
   await loadSettings();
-  
-  // Setup event listeners
   setupEventListeners();
-  
-  // Initialize views
+  initAnalytics();
   await initViews();
-  
-  // Log app open
-  logEvent(EVENT_TYPES.SEM_OPEN);
-  
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    try {
-      await navigator.serviceWorker.register('./sw.js');
-      console.log('Service Worker registered');
-    } catch (error) {
-      console.warn('Service Worker registration failed:', error);
-    }
-  }
+  updateOnlineIndicator();
 });
