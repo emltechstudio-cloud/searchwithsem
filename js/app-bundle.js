@@ -909,10 +909,7 @@ function cacheElements() {
     historyList: document.getElementById('historyList'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     closeHistoryBtn: document.getElementById('closeHistoryBtn'),
-    firstRunModal: document.getElementById('firstRunModal'),
-    firstRunOverlay: document.getElementById('firstRunOverlay'),
-    firstRunYes: document.getElementById('firstRunYes'),
-    firstRunNo: document.getElementById('firstRunNo')
+    firstRunModal: document.getElementById('firstRunModal')
   };
 }
 
@@ -1068,6 +1065,11 @@ function setupEventListeners() {
     if (elements.achievementsPanel && !elements.achievementsPanel.contains(e.target) && 
         e.target !== elements.achievementsBtn && !elements.achievementsBtn?.contains(e.target)) {
       closeAchievementsPanel();
+    }
+    // Close first run modal when clicking outside
+    if (elements.firstRunModal && elements.firstRunModal.style.display === 'block' && 
+        !elements.firstRunModal.contains(e.target)) {
+      closeFirstRunModal();
     }
   });
   
@@ -1680,15 +1682,13 @@ function toggleTheme() {
 }
 
 function showFirstRunModal() {
-  if (!elements.firstRunModal || !elements.firstRunOverlay) return;
-  elements.firstRunModal.style.display = 'flex';
-  elements.firstRunOverlay.style.display = 'block';
+  if (!elements.firstRunModal) return;
+  elements.firstRunModal.style.display = 'block';
 }
 
 function closeFirstRunModal() {
-  if (!elements.firstRunModal || !elements.firstRunOverlay) return;
+  if (!elements.firstRunModal) return;
   elements.firstRunModal.style.display = 'none';
-  elements.firstRunOverlay.style.display = 'none';
 }
 
 function updateOnlineIndicator() {

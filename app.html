@@ -77,7 +77,7 @@
             <!-- Trending Section -->
             <div class="trending-section">
                 <div class="section-label">
-                    <i class="fas fa-fire-alt" style="color: var(--red);"></i> Trending Today
+                    <i class="fas fa-fire-alt" style="color: var(--error);"></i> Trending Today
                 </div>
                 <div class="trending-chips" id="trendingChips">
                     <span class="chip-loading">Loading trending topics...</span>
@@ -197,20 +197,16 @@
         <div class="achievements-body" id="achievementsList"></div>
     </div>
 
-    <!-- First Run Modal -->
-    <div class="first-run-overlay" id="firstRunOverlay"></div>
+    <!-- First Run Modal - Simple Centered -->
     <div class="first-run-modal" id="firstRunModal">
-        <div class="first-run-title">Welcome to Search with SEM</div>
+        <div class="first-run-title">Auto-Save?</div>
         <div class="first-run-text">
-            Would you like to automatically save every search for offline reading?
+            Save every search for offline reading?
             <div class="privacy-note">We count visits. Not what you search.</div>
         </div>
         <div class="first-run-actions">
-            <button class="first-run-btn yes" id="firstRunYes">Yes, Save All</button>
-            <button class="first-run-btn no" id="firstRunNo">No, Ask Me</button>
-        </div>
-        <div class="first-run-arrow">
-            <i class="fas fa-arrow-down"></i>
+            <button class="first-run-btn yes" id="firstRunYes">Yes</button>
+            <button class="first-run-btn no" id="firstRunNo">No</button>
         </div>
     </div>
 
