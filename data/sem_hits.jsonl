@@ -1,0 +1,3 @@
+// This file stores analytics events locally before syncing to the server
+// Format: one JSON object per line
+// Example: {"event_type":"sem_open","visitor":"abc123","country_code":"NG","timestamp":"2026-09-17T00:00:00Z"}

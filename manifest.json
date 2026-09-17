@@ -1,13 +1,13 @@
 {
   "name": "Search with SEM",
   "short_name": "SEM Search",
-  "description": "Fast Wikipedia search with summaries, images, trending topics and related articles.",
+  "description": "Fast Wikipedia search with summaries, images, trending topics, related articles, and offline reading.",
   "start_url": "./app.html",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#4285f4",
-  "categories": ["education", "utilities", "news"],
+  "categories": ["education", "utilities", "news", "reference"],
   "icons": [
     {
       "src": "icon.svg",
@@ -20,5 +20,59 @@
       "sizes": "180x180",
       "type": "image/png"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Home View"
+    },
+    {
+      "src": "assets/screenshot-topic.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Topic View"
+    },
+    {
+      "src": "assets/screenshot-library.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Library View"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Search",
+      "short_name": "Search",
+      "description": "Start a new Wikipedia search",
+      "url": "./app.html",
+      "icons": [
+        {
+          "src": "https://cdn.jsdelivr.net/gh/google/material-design-icons@latest/action/1x_web/ic_search_black_48dp.png",
+          "sizes": "48x48",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Library",
+      "short_name": "Library",
+      "description": "View your saved topics",
+      "url": "./app.html#library",
+      "icons": [
+        {
+          "src": "https://cdn.jsdelivr.net/gh/google/material-design-icons@latest/action/1x_web/ic_library_books_black_48dp.png",
+          "sizes": "48x48",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "iarc_protocol_allowlist": []
 }
