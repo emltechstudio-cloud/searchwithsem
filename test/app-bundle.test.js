@@ -118,7 +118,9 @@ function loadBundle() {
       saveTopic,
       isTopicSaved,
       getAchievements,
-      getHistory
+      getHistory,
+      setupEventListeners,
+      showView
     };
   `;
   const document = {
@@ -163,9 +165,51 @@ function baseElements() {
     readerTitle: new MockElement(),
     libraryGrid: null,
     firstRunModal: null,
-    librarySection: null
+    librarySection: null,
+    homeScreen: new MockElement(),
+    topicScreen: new MockElement(),
+    readerScreen: new MockElement(),
+    libraryScreen: new MockElement(),
+    footer: new MockElement(),
+    homeBtn: new MockElement('button'),
+    libraryBtn: new MockElement('button'),
+    historyBtn: new MockElement('button'),
+    achievementsBtn: new MockElement('button'),
+    themeBtn: new MockElement('button'),
+    firstRunModal: new MockElement(),
+    firstRunYes: new MockElement('button'),
+    firstRunNo: new MockElement('button'),
+    autoSaveIndicator: new MockElement('button'),
+    searchInput: new MockElement('input')
   };
 }
+
+
+test('Home is the guaranteed initial view', () => {
+  const { app } = loadBundle();
+  const elements = baseElements();
+  app.setElements(elements);
+  app.setState({ currentView: 'topic', stats: { streak: 0, totalReads: 0, totalSaves: 0, totalShares: 0 } });
+  app.showView('home');
+  assert.equal(elements.homeScreen.style.display, 'flex');
+  assert.equal(app.getState().currentView, 'home');
+});
+
+test('First-run Yes and No buttons respond and close the modal', async () => {
+  const { app } = loadBundle();
+  const elements = baseElements();
+  app.setElements(elements);
+  app.setupEventListeners();
+  elements.autoSaveIndicator.querySelector = () => ({ textContent: '' });
+  elements.firstRunModal.style.display = 'block';
+  elements.firstRunYes.listeners.click();
+  assert.equal(app.getState().autoSave, true);
+  assert.equal(elements.firstRunModal.style.display, 'none');
+  elements.firstRunModal.style.display = 'block';
+  elements.firstRunNo.listeners.click();
+  assert.equal(app.getState().autoSave, false);
+  assert.equal(elements.firstRunModal.style.display, 'none');
+});
 
 test('Home dashboard renders confident metric cards', () => {
   const { app } = loadBundle();

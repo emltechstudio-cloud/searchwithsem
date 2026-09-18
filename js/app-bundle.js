@@ -912,7 +912,9 @@ function cacheElements() {
     historySearch: document.getElementById('historySearch'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     closeHistoryBtn: document.getElementById('closeHistoryBtn'),
-    firstRunModal: document.getElementById('firstRunModal')
+    firstRunModal: document.getElementById('firstRunModal'),
+    firstRunYes: document.getElementById('firstRunYes'),
+    firstRunNo: document.getElementById('firstRunNo')
   };
 }
 
@@ -1906,5 +1908,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   initAnalytics();
   await initViews();
+  // Always land on the Home dashboard, including first visit and refresh.
+  showView('home');
   updateOnlineIndicator();
 });
