@@ -1,0 +1,11 @@
+{
+  "name": "searchwithsem",
+  "private": true,
+  "version": "3.0.0",
+  "description": "Search with SEM browser app",
+  "scripts": {
+    "test": "node --test test/app-bundle.test.js",
+    "test:watch": "node --test --watch test/app-bundle.test.js",
+    "check": "npm test && for f in js/*.js sw.js; do node --check \"$f\"; done"
+  }
+}
