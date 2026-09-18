@@ -121,7 +121,7 @@ async function logEvent(eventType, metadata = {}) {
     const visitorId = await getVisitorId();
     const countryCode = await getCountryCode();
     const payload = { event_type: eventType, visitor: visitorId, country_code: countryCode, ...metadata };
-    
+
     try {
       await fetch(ANALYTICS_ENDPOINTS.logEvent, {
         method: 'POST',
@@ -288,18 +288,18 @@ function incrementTotalShares() {
 function updateStreak() {
   const today = new Date().toISOString().split('T')[0];
   const lastActive = getLastActiveDate();
-  
+
   if (!lastActive) {
     // First time
     saveStreak(1);
     saveLastActiveDate(today);
     return 1;
   }
-  
+
   const lastDate = new Date(lastActive);
   const todayDate = new Date(today);
   const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays === 1) {
     // Consecutive day
     const newStreak = getStreak() + 1;
@@ -320,7 +320,7 @@ function updateStreak() {
 function checkAchievements(action, data = {}) {
   const achievements = getAchievements();
   const newAchievements = [];
-  
+
   switch (action) {
     case 'search':
       if (!achievements.first_search) {
@@ -377,7 +377,7 @@ function checkAchievements(action, data = {}) {
       }
       break;
   }
-  
+
   // Check time-based achievements
   const hour = new Date().getHours();
   if (hour >= 21 && hour <= 23 && !achievements.night_owl) {
@@ -387,12 +387,12 @@ function checkAchievements(action, data = {}) {
     achievements.early_bird = true;
     newAchievements.push(ACHIEVEMENTS.EARLY_BIRD);
   }
-  
+
   if (newAchievements.length > 0) {
     saveAchievements(achievements);
     return newAchievements;
   }
-  
+
   saveAchievements(achievements);
   return [];
 }
@@ -463,7 +463,7 @@ async function getTopics(query = '', tag = null) {
       let topics = request.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
       if (query) {
         const queryLower = query.toLowerCase();
-        topics = topics.filter(t => 
+        topics = topics.filter(t =>
           t.title.toLowerCase().includes(queryLower) ||
           t.note.toLowerCase().includes(queryLower) ||
           t.summary.toLowerCase().includes(queryLower) ||
@@ -587,7 +587,7 @@ async function searchWikipedia(query) {
   const cacheKey = `wiki-summary-${query}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
+
   try {
     const response = await fetch(WIKI_ENDPOINTS.summary(query), { headers: { 'User-Agent': USER_AGENT } });
     if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
@@ -606,7 +606,7 @@ function processMediaList(data) {
     .filter(item => {
       if (item.type !== 'image') return false;
       const title = (item.title || '').toLowerCase();
-      return !title.includes('icon') && !title.includes('commons-logo') && 
+      return !title.includes('icon') && !title.includes('commons-logo') &&
              !title.includes('wikimedia') && (item.srcset || []).length > 0;
     })
     .map(item => {
@@ -631,7 +631,7 @@ async function getImages(title) {
   const cacheKey = `wiki-images-${title}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
+
   try {
     const response = await fetch(WIKI_ENDPOINTS.mediaList(title), { headers: { 'User-Agent': USER_AGENT } });
     if (response.ok) {
@@ -642,7 +642,7 @@ async function getImages(title) {
         return images;
       }
     }
-    
+
     const searchResponse = await fetch(
       `https://en.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch=${encodeURIComponent(title)}&gsrlimit=16&prop=pageimages&pithumbsize=800&format=json`,
       { headers: { 'User-Agent': USER_AGENT } }
@@ -661,7 +661,7 @@ async function getRelatedTopics(title) {
   const cacheKey = `wiki-related-${title}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
+
   try {
     const response = await fetch(WIKI_ENDPOINTS.related(title), { headers: { 'User-Agent': USER_AGENT } });
     if (!response.ok) return [];
@@ -683,7 +683,7 @@ async function getFullArticle(title) {
   const cacheKey = `wiki-full-${title}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
+
   try {
     const response = await fetch(WIKI_ENDPOINTS.fullArticle(title), {
       headers: { 'User-Agent': USER_AGENT }
@@ -701,13 +701,13 @@ async function getFullArticle(title) {
       throw new Error('Failed to fetch article');
     }
     let html = await response.text();
-    
+
     // Clean up the HTML for better display
     html = html.replace(/<style[^>]*>.*?<\/style>/gsi, '');
     html = html.replace(/<script[^>]*>.*?<\/script>/gsi, '');
     html = html.replace(/<link[^>]*>/gi, '');
     html = html.replace(/<meta[^>]*>/gi, '');
-    
+
     setCache(cacheKey, html, CACHE_TTL);
     return html;
   } catch (error) {
@@ -722,7 +722,7 @@ async function getTrendingTopics() {
   if (cached && (Date.now() - cached.timestamp < 15 * 60 * 1000)) {
     return cached.value;
   }
-  
+
   try {
     const response = await fetch(WIKI_ENDPOINTS.trending(), { headers: { 'User-Agent': USER_AGENT } });
     if (!response.ok) return fallbackTrending();
@@ -765,7 +765,7 @@ async function getInstantAnswer(query) {
   const cacheKey = `ddg-ia-${query}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
-  
+
   try {
     const response = await fetch(DDG_ENDPOINTS.instantAnswer(query), { headers: { 'User-Agent': USER_AGENT } });
     if (!response.ok) return null;
@@ -882,6 +882,8 @@ function cacheElements() {
     readerScreen: document.getElementById('readerScreen'),
     readerContent: document.getElementById('readerContent'),
     readerClose: document.getElementById('readerClose'),
+    readerSaveBtn: document.getElementById('readerSaveBtn'),
+    readerShareBtn: document.getElementById('readerShareBtn'),
     readerTitle: document.getElementById('readerTitle'),
     libraryScreen: document.getElementById('libraryScreen'),
     librarySearch: document.getElementById('librarySearch'),
@@ -907,6 +909,7 @@ function cacheElements() {
     closeAchievementsBtn: document.getElementById('closeAchievementsBtn'),
     historyPanel: document.getElementById('historyPanel'),
     historyList: document.getElementById('historyList'),
+    historySearch: document.getElementById('historySearch'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     closeHistoryBtn: document.getElementById('closeHistoryBtn'),
     firstRunModal: document.getElementById('firstRunModal')
@@ -921,23 +924,23 @@ async function loadSettings() {
   state.stats.totalSaves = getTotalSaves();
   state.stats.totalShares = getTotalShares();
   state.stats.achievements = Object.keys(getAchievements());
-  
+
   applyTheme(state.theme);
   updateAutoSaveIndicator();
-  
+
   const firstRun = await getSetting('firstRun', true);
   if (firstRun) {
     showFirstRunModal();
     await setSetting('firstRun', false);
   }
-  
+
   // Update streak on app open
   const newStreak = updateStreak();
   if (newStreak !== state.stats.streak) {
     state.stats.streak = newStreak;
     checkAchievements('daily');
   }
-  
+
   // Log app open event
   logEvent(EVENT_TYPES.SEM_OPEN);
 }
@@ -965,7 +968,7 @@ function setupEventListeners() {
   if (elements.autoSaveIndicator) {
     elements.autoSaveIndicator.addEventListener('click', toggleAutoSave);
   }
-  
+
   if (elements.searchInput) {
     elements.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') performSearch();
@@ -1019,6 +1022,8 @@ function setupEventListeners() {
   if (elements.readerClose) {
     elements.readerClose.addEventListener('click', () => showView('topic'));
   }
+  if (elements.readerSaveBtn) elements.readerSaveBtn.addEventListener('click', saveCurrentTopic);
+  if (elements.readerShareBtn) elements.readerShareBtn.addEventListener('click', shareCurrentTopic);
   if (elements.lbClose) {
     elements.lbClose.addEventListener('click', closeLightbox);
   }
@@ -1033,7 +1038,7 @@ function setupEventListeners() {
       if (e.target === elements.lightbox) closeLightbox();
     });
   }
-  
+
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (elements.lightbox?.classList.contains('active')) {
@@ -1045,7 +1050,7 @@ function setupEventListeners() {
       closeAchievementsPanel();
     }
   });
-  
+
   // Lightbox touch gestures
   let touchX = 0;
   if (elements.lightbox) {
@@ -1055,26 +1060,29 @@ function setupEventListeners() {
       if (Math.abs(diff) > 48) shiftLb(diff > 0 ? 1 : -1);
     });
   }
-  
+
   // Close panels when clicking outside
   document.addEventListener('click', (e) => {
-    if (elements.historyPanel && !elements.historyPanel.contains(e.target) && 
+    if (elements.historyPanel && !elements.historyPanel.contains(e.target) &&
         e.target !== elements.historyBtn && !elements.historyBtn?.contains(e.target)) {
       closeHistoryPanel();
     }
-    if (elements.achievementsPanel && !elements.achievementsPanel.contains(e.target) && 
+    if (elements.achievementsPanel && !elements.achievementsPanel.contains(e.target) &&
         e.target !== elements.achievementsBtn && !elements.achievementsBtn?.contains(e.target)) {
       closeAchievementsPanel();
     }
     // Close first run modal when clicking outside
-    if (elements.firstRunModal && elements.firstRunModal.style.display === 'block' && 
+    if (elements.firstRunModal && elements.firstRunModal.style.display === 'block' &&
         !elements.firstRunModal.contains(e.target)) {
       closeFirstRunModal();
     }
   });
-  
+
   if (elements.librarySearch) {
     elements.librarySearch.addEventListener('input', (e) => renderLibrary(e.target.value));
+  }
+  if (elements.historySearch) {
+    elements.historySearch.addEventListener('input', (e) => renderHistory(e.target.value));
   }
   if (elements.librarySearchClear) {
     elements.librarySearchClear.addEventListener('click', () => {
@@ -1114,7 +1122,7 @@ function setupEventListeners() {
   if (elements.closeAchievementsBtn) {
     elements.closeAchievementsBtn.addEventListener('click', closeAchievementsPanel);
   }
-  
+
   // Online/offline events
   window.addEventListener('online', () => {
     state.isOnline = true;
@@ -1126,7 +1134,7 @@ function setupEventListeners() {
     updateOnlineIndicator();
     showToast('Offline - using cached data');
   });
-  
+
   // Scroll effect for header
   window.addEventListener('scroll', () => {
     if (elements.header) {
@@ -1158,27 +1166,14 @@ async function initViews() {
 
 function renderStats() {
   if (!elements.statsSection) return;
-  
+  const savedCount = state.stats.totalSaves;
+  const readCount = state.stats.totalReads;
+  const level = Math.max(1, Math.floor((savedCount + readCount) / 5) + 1);
   elements.statsSection.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-value streak-indicator">
-        ${state.stats.streak}
-        <span class="fire-icon">🔥</span>
-      </div>
-      <div class="stat-label">Day Streak</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">${state.stats.totalReads}</div>
-      <div class="stat-label">Reads</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">${state.stats.totalSaves}</div>
-      <div class="stat-label">Saves</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">${state.stats.totalShares}</div>
-      <div class="stat-label">Shares</div>
-    </div>
+    <div class="stat-card stat-card-featured"><div class="stat-icon"><i class="fas fa-fire"></i></div><div><div class="stat-value">${state.stats.streak}</div><div class="stat-label">Day streak</div></div><span class="stat-trend">Keep going</span></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fas fa-book-open"></i></div><div><div class="stat-value">${readCount}</div><div class="stat-label">Articles read</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="far fa-bookmark"></i></div><div><div class="stat-value">${savedCount}</div><div class="stat-label">Saved topics</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fas fa-star"></i></div><div><div class="stat-value">Level ${level}</div><div class="stat-label">Knowledge builder</div></div></div>
   `;
 }
 
@@ -1189,7 +1184,7 @@ function showView(view) {
     if (el) el.style.display = 'none';
   });
   state.currentView = view;
-  
+
   switch (view) {
     case 'home':
       if (elements.homeScreen) {
@@ -1230,14 +1225,14 @@ async function performSearch() {
   if (!elements.searchInput) return;
   const query = elements.searchInput.value.trim();
   if (!query) { showToast('Enter something to search'); return; }
-  
+
   showLoading('Searching Wikipedia...');
-  
+
   try {
     addToHistory(query);
     renderHistory();
     localStorage.setItem('lastSearch', query);
-    
+
     const wikiData = await searchWikipedia(query);
     const [images, related, instantAnswer, coverImage] = await Promise.all([
       getImages(wikiData.title || query),
@@ -1245,13 +1240,13 @@ async function performSearch() {
       getInstantAnswer(query),
       getCoverImage(wikiData.title || query)
     ]);
-    
+
     // Fetch full article for saving
     let fullArticle = '';
     if (state.autoSave) {
       fullArticle = await getFullArticle(wikiData.title || query);
     }
-    
+
     state.currentTopic = {
       title: wikiData.title || query,
       summary: wikiData.extract || 'No summary available.',
@@ -1263,14 +1258,14 @@ async function performSearch() {
     state.currentRelated = related;
     state.currentNote = '';
     state.lbIndex = 0;
-    
+
     const isSaved = await isTopicSaved(state.currentTopic.title);
     renderTopicView(instantAnswer, isSaved);
     showView('topic');
-    
+
     logEvent(EVENT_TYPES.SEM_SEARCH);
     checkAchievements('search');
-    
+
     if (state.autoSave) {
       saveCurrentTopic();
     }
@@ -1291,9 +1286,9 @@ function renderTopicView(instantAnswer, isSaved) {
       elements.topicCover.style.display = 'none';
     }
   }
-  
+
   if (elements.topicTitle) elements.topicTitle.textContent = state.currentTopic.title;
-  
+
   // Only show quick fact if it exists, don't duplicate with summary
   if (instantAnswer && elements.quickFactContent) {
     elements.quickFactContent.textContent = instantAnswer;
@@ -1307,22 +1302,26 @@ function renderTopicView(instantAnswer, isSaved) {
       elements.wikiSummary.innerHTML = `<p>${state.currentTopic.summary}</p>`;
     }
   }
-  
+
   if (elements.topicSubtitle) {
     elements.topicSubtitle.textContent = instantAnswer ? 'Quick Fact Available' : state.currentTopic.summary.substring(0, 100) + '...';
   }
-  
+
   renderImagesStrip();
   renderRelatedChips();
-  
+
   if (elements.userNote) elements.userNote.value = state.currentNote;
-  
+
   if (elements.saveBtn) {
     elements.saveBtn.textContent = isSaved ? 'Saved ✓' : 'Save';
     elements.saveBtn.dataset.saved = isSaved.toString();
   }
-  
+
   if (elements.readerTitle) elements.readerTitle.textContent = state.currentTopic.title;
+  if (elements.readerSaveBtn) {
+    elements.readerSaveBtn.classList.toggle('saved', isSaved);
+    elements.readerSaveBtn.innerHTML = isSaved ? '<i class="fas fa-check"></i><span>Saved offline</span>' : '<i class="far fa-bookmark"></i><span>Save</span>';
+  }
 }
 
 function renderImagesStrip() {
@@ -1330,10 +1329,10 @@ function renderImagesStrip() {
     if (elements.imagesStripContainer) elements.imagesStripContainer.style.display = 'none';
     return;
   }
-  
+
   elements.imagesStrip.innerHTML = '';
   const previewImages = state.currentImages.slice(0, 4);
-  
+
   previewImages.forEach((img, i) => {
     const imgEl = document.createElement('img');
     imgEl.src = img.src;
@@ -1346,7 +1345,7 @@ function renderImagesStrip() {
     imgEl.onclick = () => openLightbox(i);
     elements.imagesStrip.appendChild(imgEl);
   });
-  
+
   if (state.currentImages.length > 4) {
     const seeMore = document.createElement('button');
     seeMore.className = 'see-more-btn';
@@ -1354,7 +1353,7 @@ function renderImagesStrip() {
     seeMore.onclick = () => openLightbox(4);
     elements.imagesStrip.appendChild(seeMore);
   }
-  
+
   if (elements.imagesStripContainer) elements.imagesStripContainer.style.display = 'flex';
 }
 
@@ -1391,18 +1390,18 @@ function toggleQuickFact() {
 async function openReader() {
   if (!state.currentTopic) return;
   showLoading('Loading article...');
-  
+
   try {
     // Use cached full article if available
     let articleHtml = state.currentTopic.fullArticle;
     if (!articleHtml) {
       articleHtml = await getFullArticle(state.currentTopic.title);
     }
-    
+
     if (elements.readerContent) {
       elements.readerContent.innerHTML = articleHtml;
     }
-    
+
     showView('reader');
     logEvent(EVENT_TYPES.SEM_READER, { topic: state.currentTopic.title });
     incrementTotalReads();
@@ -1418,26 +1417,33 @@ async function openReader() {
 
 async function saveCurrentTopic() {
   if (!state.currentTopic) return;
-  
+
   // If full article is not cached, fetch it
   let fullArticle = state.currentTopic.fullArticle;
   if (!fullArticle) {
     fullArticle = await getFullArticle(state.currentTopic.title);
   }
-  
-  const topic = { 
-    ...state.currentTopic, 
+
+  const existingTopics = await getTopics();
+  const existing = existingTopics.find(item => item.title === state.currentTopic.title);
+  const topic = {
+    ...state.currentTopic,
+    id: existing?.id,
     fullArticle,
-    note: state.currentNote, 
-    isAutoSaved: state.autoSave, 
-    tags: [] 
+    note: state.currentNote,
+    isAutoSaved: state.autoSave,
+    tags: existing?.tags || []
   };
-  
+
   try {
     await saveTopic(topic);
     if (elements.saveBtn) {
-      elements.saveBtn.textContent = 'Saved ✓';
+      elements.saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
       elements.saveBtn.dataset.saved = 'true';
+    }
+    if (elements.readerSaveBtn) {
+      elements.readerSaveBtn.innerHTML = '<i class="fas fa-check"></i><span>Saved offline</span>';
+      elements.readerSaveBtn.classList.add('saved');
     }
     showToast('Topic saved to library!');
     logEvent(EVENT_TYPES.SEM_SAVE, { topic: topic.title });
@@ -1487,12 +1493,12 @@ async function renderLibraryPreview() {
   if (!elements.libraryGrid) return;
   const topics = await getTopics('', null);
   elements.libraryGrid.innerHTML = '';
-  
+
   if (topics.length === 0) {
     if (elements.librarySection) elements.librarySection.style.display = 'none';
     return;
   }
-  
+
   const previewTopics = topics.slice(0, 6);
   previewTopics.forEach(topic => {
     const card = document.createElement('button');
@@ -1505,31 +1511,31 @@ async function renderLibraryPreview() {
       renderTopicView(null, true);
       showView('topic');
     };
-    
+
     const img = document.createElement('img');
     img.src = topic.coverImage || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%23999" font-size="14">No Image</text></svg>';
     img.alt = topic.title;
     img.loading = 'lazy';
     img.style.objectFit = 'cover';
     img.style.background = 'var(--bg-secondary)';
-    img.onerror = () => { 
+    img.onerror = () => {
       img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f0f0f0" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%23999" font-size="14">No Image</text></svg>';
     };
-    
+
     const title = document.createElement('div');
     title.className = 'library-card-title';
     title.textContent = topic.title;
-    
+
     const date = document.createElement('div');
     date.className = 'library-card-date';
     date.textContent = new Date(topic.savedAt).toLocaleDateString();
-    
+
     card.appendChild(img);
     card.appendChild(title);
     card.appendChild(date);
     elements.libraryGrid.appendChild(card);
   });
-  
+
   if (elements.librarySection) elements.librarySection.style.display = 'block';
 }
 
@@ -1537,43 +1543,43 @@ async function renderLibrary(query = '', tag = null) {
   if (!elements.libraryResults) return;
   const topics = await getTopics(query, tag);
   elements.libraryResults.innerHTML = '';
-  
+
   if (topics.length === 0) {
     elements.libraryResults.innerHTML = '<div class="empty-state"><i class="fas fa-book"></i><p>No topics found.</p></div>';
     return;
   }
-  
+
   topics.forEach(topic => {
     const card = document.createElement('div');
     card.className = 'library-item';
-    
+
     const img = document.createElement('img');
     img.src = topic.coverImage || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%23f0f0f0" width="80" height="80"/><text x="40" y="45" text-anchor="middle" fill="%23999" font-size="10">No Image</text></svg>';
     img.alt = topic.title;
     img.loading = 'lazy';
     img.style.objectFit = 'cover';
     img.style.background = 'var(--bg-secondary)';
-    img.onerror = () => { 
+    img.onerror = () => {
       img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%23f0f0f0" width="80" height="80"/><text x="40" y="45" text-anchor="middle" fill="%23999" font-size="10">No Image</text></svg>';
     };
-    
+
     const info = document.createElement('div');
     info.className = 'library-item-info';
-    
+
     const title = document.createElement('h3');
     title.textContent = topic.title;
-    
+
     const date = document.createElement('div');
     date.className = 'library-item-date';
     date.textContent = new Date(topic.savedAt).toLocaleDateString();
-    
+
     const notePreview = document.createElement('div');
     notePreview.className = 'library-item-note';
     notePreview.textContent = topic.note ? topic.note.substring(0, 100) + (topic.note.length > 100 ? '...' : '') : 'No note';
-    
+
     const actions = document.createElement('div');
     actions.className = 'library-item-actions';
-    
+
     const viewBtn = document.createElement('button');
     viewBtn.className = 'btn-icon';
     viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
@@ -1586,15 +1592,15 @@ async function renderLibrary(query = '', tag = null) {
       renderTopicView(null, true);
       showView('topic');
     };
-    
+
     const shareBtn = document.createElement('button');
     shareBtn.className = 'btn-icon';
     shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
-    shareBtn.onclick = (e) => { 
-      e.stopPropagation(); 
-      shareTopic(topic); 
+    shareBtn.onclick = (e) => {
+      e.stopPropagation();
+      shareTopic(topic);
     };
-    
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-icon btn-icon-danger';
     deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
@@ -1608,19 +1614,19 @@ async function renderLibrary(query = '', tag = null) {
         });
       }
     };
-    
+
     actions.appendChild(viewBtn);
     actions.appendChild(shareBtn);
     actions.appendChild(deleteBtn);
-    
+
     info.appendChild(title);
     info.appendChild(date);
     info.appendChild(notePreview);
-    
+
     card.appendChild(img);
     card.appendChild(info);
     card.appendChild(actions);
-    
+
     card.onclick = () => {
       state.currentTopic = topic;
       state.currentImages = [];
@@ -1629,14 +1635,14 @@ async function renderLibrary(query = '', tag = null) {
       renderTopicView(null, true);
       showView('topic');
     };
-    
+
     elements.libraryResults.appendChild(card);
   });
 }
 
 async function renderLibraryTags() {
   if (!elements.libraryTags) return;
-  
+
   const topics = await getTopics();
   const allTags = new Set();
   topics.forEach(topic => {
@@ -1644,13 +1650,13 @@ async function renderLibraryTags() {
       topic.tags.forEach(tag => allTags.add(tag));
     }
   });
-  
+
   const tags = Array.from(allTags).sort();
-  
+
   elements.libraryTags.innerHTML = '';
-  
+
   if (tags.length === 0) return;
-  
+
   const allTag = document.createElement('button');
   allTag.className = 'tag-chip active';
   allTag.textContent = 'All';
@@ -1660,7 +1666,7 @@ async function renderLibraryTags() {
     renderLibrary(elements.librarySearch?.value || '');
   };
   elements.libraryTags.appendChild(allTag);
-  
+
   tags.forEach(tag => {
     const tagEl = document.createElement('button');
     tagEl.className = 'tag-chip';
@@ -1789,76 +1795,39 @@ function closeAchievementsPanel() {
 
 function renderAchievements() {
   if (!elements.achievementsList) return;
-  
   const achievements = getAchievements();
-  const achievementsList = Object.values(ACHIEVEMENTS);
-  
-  elements.achievementsList.innerHTML = '';
-  
-  achievementsList.forEach(achievement => {
-    const achieved = achievements[achievement.id];
-    const item = document.createElement('div');
-    item.className = `achievement-item ${achieved ? 'achieved' : 'locked'}`;
-    
-    const icon = document.createElement('div');
-    icon.className = 'achievement-icon';
-    icon.textContent = achievement.icon;
-    
-    const info = document.createElement('div');
-    info.className = 'achievement-info';
-    
-    const name = document.createElement('div');
-    name.className = 'achievement-name';
-    name.textContent = achievement.name;
-    
-    const description = document.createElement('div');
-    description.className = 'achievement-description';
-    description.textContent = achievement.description;
-    
-    const points = document.createElement('div');
-    points.className = 'achievement-points';
-    points.textContent = `+${achievement.points} XP`;
-    
-    if (achieved) {
-      const badge = document.createElement('div');
-      badge.className = 'achievement-badge';
-      badge.textContent = '✓';
-      item.appendChild(badge);
-    }
-    
-    info.appendChild(name);
-    info.appendChild(description);
-    info.appendChild(points);
-    
-    item.appendChild(icon);
-    item.appendChild(info);
-    
-    elements.achievementsList.appendChild(item);
-  });
+  const list = Object.values(ACHIEVEMENTS);
+  const earned = list.filter(item => achievements[item.id]).length;
+  const points = list.filter(item => achievements[item.id]).reduce((sum, item) => sum + item.points, 0);
+  const next = list.find(item => !achievements[item.id]);
+  const progressTarget = next?.target || 1;
+  const progressValue = next?.id === 'library_builder' ? state.stats.totalSaves : next?.id === 'reader_explorer' ? state.stats.totalReads : next?.id === 'share_enthusiast' ? state.stats.totalShares : 0;
+  const progress = Math.min(100, Math.round((progressValue / progressTarget) * 100));
+  elements.achievementsList.innerHTML = `
+    <div class="achievement-hero"><div><span class="eyebrow">YOUR PROGRESS</span><h4>Keep building your knowledge.</h4><p>${earned} of ${list.length} badges earned · ${points} XP collected</p></div><div class="level-orb"><strong>Lv ${Math.max(1, Math.floor(points / 100) + 1)}</strong><span>Explorer</span></div></div>
+    <div class="achievement-metrics"><div><strong>${state.stats.streak}</strong><span>Day streak</span></div><div><strong>${state.stats.totalReads}</strong><span>Articles read</span></div><div><strong>${state.stats.totalSaves}</strong><span>Saved</span></div><div><strong>${state.stats.totalShares}</strong><span>Shared</span></div></div>
+    ${next ? `<div class="next-achievement"><div class="next-icon">${next.icon}</div><div class="next-copy"><span class="eyebrow">UP NEXT</span><strong>${next.name}</strong><small>${next.description}</small><div class="progress-track"><span style="width:${progress}%"></span></div><em>${progressValue} / ${progressTarget}</em></div></div>` : ''}
+    <div class="badge-heading"><span>Badges</span><small>${earned} unlocked</small></div>
+    <div class="badge-grid">${list.map(item => `<div class="badge-card ${achievements[item.id] ? 'unlocked' : 'locked'}"><div class="badge-symbol">${item.icon}</div><strong>${item.name}</strong><span>${achievements[item.id] ? 'Unlocked' : `+${item.points} XP`}</span></div>`).join('')}</div>
+  `;
 }
 
-function renderHistory() {
+function renderHistory(query = '') {
   if (!elements.historyList) return;
-  const history = getHistory();
+  const normalized = query.trim().toLowerCase();
+  const history = getHistory().filter(item => !normalized || item.query.toLowerCase().includes(normalized));
   if (history.length === 0) {
-    elements.historyList.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>No history yet</p></div>';
+    elements.historyList.innerHTML = `<div class="empty-state"><i class="fas fa-compass"></i><p>${normalized ? 'No matching searches' : 'Your search trail is empty'}</p><span>${normalized ? 'Try another term.' : 'Searches will appear here as you explore.'}</span></div>`;
     return;
   }
   elements.historyList.innerHTML = '';
-  history.forEach((item, i) => {
-    const div = document.createElement('div');
+  history.forEach(item => {
+    const div = document.createElement('button');
     div.className = 'history-item';
-    const textDiv = document.createElement('div');
-    textDiv.className = 'history-text';
-    const queryDiv = document.createElement('div');
-    queryDiv.className = 'history-query';
-    queryDiv.textContent = item.query;
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'history-time';
-    timeDiv.textContent = new Date(item.timestamp).toLocaleString();
-    textDiv.appendChild(queryDiv);
-    textDiv.appendChild(timeDiv);
-    div.appendChild(textDiv);
+    div.innerHTML = `<span class="history-icon"><i class="fas fa-search"></i></span><span class="history-text"><span class="history-query"></span><span class="history-time"></span></span><span class="history-open"><i class="fas fa-arrow-up-right-from-square"></i></span>`;
+    div.querySelector('.history-query').textContent = item.query;
+    div.querySelector('.history-time').textContent = new Date(item.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    div.onclick = () => { elements.searchInput.value = item.query; closeHistoryPanel(); performSearch(); };
     elements.historyList.appendChild(div);
   });
 }
@@ -1869,18 +1838,18 @@ function toggleVoice() {
     stopVoice();
     return;
   }
-  
+
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
     showToast('Voice search not supported in your browser');
     return;
   }
-  
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.lang = 'en-US';
-  
+
   recognition.onstart = () => {
     isListening = true;
     if (elements.voiceBtn) {
@@ -1889,7 +1858,7 @@ function toggleVoice() {
     }
     showToast('Listening...');
   };
-  
+
   recognition.onend = () => {
     isListening = false;
     if (elements.voiceBtn) {
@@ -1897,7 +1866,7 @@ function toggleVoice() {
       elements.voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
     }
   };
-  
+
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     if (elements.searchInput) {
@@ -1905,7 +1874,7 @@ function toggleVoice() {
       performSearch();
     }
   };
-  
+
   recognition.onerror = (event) => {
     isListening = false;
     if (elements.voiceBtn) {
@@ -1916,7 +1885,7 @@ function toggleVoice() {
       showToast(`Voice error: ${event.error}`);
     }
   };
-  
+
   recognition.start();
 }
 

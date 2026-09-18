@@ -2272,3 +2272,85 @@ footer {
         height: auto !important;
     }
 }
+
+
+/* ============================================
+   Confident product layer
+   ============================================ */
+:root {
+  --primary: #3157d5;
+  --primary-dark: #2343aa;
+  --primary-bg: #eef2ff;
+  --gray-900: #172033;
+  --gray-800: #273248;
+  --gray-600: #667085;
+  --gray-300: #d9dee9;
+  --bg-secondary: #f7f8fc;
+  --card-border: #e4e7ec;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+  --shadow-md: 0 8px 24px rgba(15,23,42,.08);
+  --shadow-lg: 0 16px 40px rgba(15,23,42,.12);
+}
+body { background: #f7f8fc; }
+header { background: rgba(255,255,255,.92); backdrop-filter: blur(18px); border-bottom-color: #e4e7ec; }
+.search-box { background: #fff; border-color: #d9dee9; border-radius: 14px; box-shadow: 0 2px 8px rgba(15,23,42,.04); }
+.icon-btn { border-radius: 11px; box-shadow: none; }
+main { max-width: 1120px; padding: 40px 28px calc(var(--footer-height-mobile) + 40px); }
+.home { align-items: stretch; max-width: 1000px; margin: 0 auto; }
+.home-logo, .home-sub, .home-tagline { align-self: center; }
+.home-logo { letter-spacing: -.04em; }
+.home-tagline { color: var(--gray-600); }
+.stats-section { display: grid; grid-template-columns: 1.35fr repeat(3, 1fr); gap: 12px; width: 100%; margin: 24px 0 36px; padding: 0; }
+.stat-card { position: relative; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding: 18px; background: #fff; border: 1px solid var(--card-border); border-radius: 16px; text-align: left; box-shadow: var(--shadow-sm); }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-card-featured { background: linear-gradient(135deg, #3157d5, #5676e3); color: #fff; border-color: transparent; }
+.stat-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: var(--primary-bg); color: var(--primary); }
+.stat-card-featured .stat-icon { background: rgba(255,255,255,.16); color: #fff; }
+.stat-value { font-size: 20px; line-height: 1.1; }
+.stat-label { color: var(--gray-600); font-size: 12px; margin-top: 4px; }
+.stat-card-featured .stat-label, .stat-card-featured .stat-value { color: #fff; }
+.stat-trend { margin-left: auto; font-size: 11px; opacity: .8; }
+.library-section, .trending-section { background: #fff; border: 1px solid var(--card-border); border-radius: 20px; padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+.section-label { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--gray-600); }
+.trending-chips, .related-pills { gap: 9px; }
+.chip { border-radius: 10px; background: #f7f8fc; border-color: #e4e7ec; padding: 9px 12px; }
+.chip:hover { background: var(--primary-bg); border-color: #aebdf5; }
+.reader-screen { background: #fbfcff; }
+.reader-header { padding: 16px max(24px, calc((100% - 960px)/2)); background: rgba(255,255,255,.94); backdrop-filter: blur(18px); }
+.reader-heading { min-width: 0; }
+.reader-eyebrow, .eyebrow { display:block; font-size: 10px; letter-spacing: .12em; color: var(--primary); font-weight: 800; }
+.reader-title { margin-top: 4px; }
+.reader-actions { display:flex; align-items:center; gap: 8px; }
+.reader-action { display:flex; align-items:center; gap:7px; border:1px solid var(--card-border); background:#fff; color:var(--gray-800); border-radius:10px; padding:9px 11px; font:inherit; cursor:pointer; }
+.reader-action:hover, .reader-action.saved { border-color:#aebdf5; color:var(--primary); background:var(--primary-bg); }
+.reader-content { max-width: 740px; padding: 56px 28px 100px; }
+.reader-content p { font-size: 18px; line-height: 1.8; color: #354052; }
+.history-panel, .achievements-panel { position: fixed; inset: 0; bottom: 0; max-height: none; border-radius: 0; padding: 0 max(24px, calc((100% - 900px)/2)); background: #f7f8fc; overflow-y:auto; z-index: var(--z-modal); }
+.history-head, .achievements-head { margin: 0 -24px; padding: 26px max(24px, calc((100% - 900px)/2)); background: rgba(255,255,255,.94); backdrop-filter: blur(18px); }
+.history-head h3, .achievements-head h3 { font-size: 24px; }
+.panel-intro { max-width: 900px; margin: 28px auto 16px; }
+.panel-intro p { color: var(--gray-600); margin-bottom: 14px; }
+.panel-search { width:100%; padding:13px 16px; border:1px solid var(--card-border); border-radius:12px; background:#fff; font:inherit; }
+.history-body, .achievements-body { max-width: 900px; margin:0 auto; padding: 0 0 100px; }
+.history-item { width:100%; display:flex; text-align:left; align-items:center; gap:14px; padding:16px 0; background:transparent; border:0; border-bottom:1px solid var(--card-border); cursor:pointer; }
+.history-icon { width:38px; height:38px; display:grid; place-items:center; background:#fff; border:1px solid var(--card-border); border-radius:12px; color:var(--primary); }
+.history-text { display:flex; flex-direction:column; gap:4px; }
+.history-query { font-weight:700; color:var(--gray-900); }
+.history-time { color:var(--gray-600); }
+.history-open { margin-left:auto; color:var(--gray-500); }
+.achievement-hero { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:24px; margin:28px 0 16px; border-radius:20px; color:#fff; background:linear-gradient(135deg,#172b70,#3157d5); box-shadow:var(--shadow-md); }
+.achievement-hero h4 { margin:8px 0 5px; font-size:24px; }
+.achievement-hero p { opacity:.78; }
+.level-orb { width:82px; height:82px; flex-shrink:0; display:grid; place-items:center; align-content:center; border:1px solid rgba(255,255,255,.35); border-radius:50%; background:rgba(255,255,255,.12); }
+.level-orb strong { font-size:18px; } .level-orb span { font-size:10px; opacity:.8; }
+.achievement-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.achievement-metrics > div { background:#fff; border:1px solid var(--card-border); border-radius:14px; padding:16px; }
+.achievement-metrics strong, .achievement-metrics span { display:block; } .achievement-metrics strong { font-size:22px; } .achievement-metrics span { color:var(--gray-600); font-size:12px; margin-top:5px; }
+.next-achievement { display:flex; gap:14px; padding:18px; background:#fff; border:1px solid var(--card-border); border-radius:16px; margin-bottom:24px; }
+.next-icon { font-size:28px; } .next-copy { flex:1; } .next-copy strong, .next-copy small { display:block; margin:4px 0; } .next-copy small { color:var(--gray-600); } .progress-track { height:7px; margin-top:12px; border-radius:99px; background:#edf0f6; overflow:hidden; } .progress-track span { display:block; height:100%; background:var(--primary); border-radius:inherit; } .next-copy em { font-size:11px; color:var(--gray-600); font-style:normal; }
+.badge-heading { display:flex; justify-content:space-between; align-items:center; margin:10px 0; font-weight:800; } .badge-heading small { color:var(--gray-600); font-weight:400; }
+.badge-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.badge-card { padding:18px 12px; text-align:center; background:#fff; border:1px solid var(--card-border); border-radius:16px; } .badge-card.locked { opacity:.48; filter:grayscale(1); } .badge-symbol { font-size:28px; margin-bottom:8px; } .badge-card strong, .badge-card span { display:block; } .badge-card strong { font-size:13px; } .badge-card span { color:var(--gray-600); font-size:11px; margin-top:4px; }
+footer { background:rgba(255,255,255,.94); backdrop-filter:blur(18px); border:1px solid var(--card-border); border-bottom:0; border-radius:18px 18px 0 0; box-shadow:0 -8px 30px rgba(15,23,42,.08); }
+.footer-btn { min-width:76px; padding:10px 12px; border-radius:12px; } .footer-btn.active { background:var(--primary-bg); color:var(--primary); }
+@media (max-width: 700px) { .stats-section { grid-template-columns:repeat(2,1fr); } .stat-card-featured { grid-column:span 2; } .achievement-metrics { grid-template-columns:repeat(2,1fr); } .badge-grid { grid-template-columns:repeat(2,1fr); } .reader-action span { display:none; } .reader-header { padding:14px 16px; } main { padding:28px 16px calc(var(--footer-height-mobile) + 28px); } }

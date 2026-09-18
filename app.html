@@ -138,10 +138,15 @@
         <!-- Reader View -->
         <div id="readerScreen" class="reader-screen">
             <div class="reader-header">
-                <div class="reader-title" id="readerTitle"></div>
-                <button class="reader-close" id="readerClose" title="Close">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="reader-heading">
+                    <span class="reader-eyebrow"><i class="fas fa-book-open"></i> Reading mode</span>
+                    <div class="reader-title" id="readerTitle"></div>
+                </div>
+                <div class="reader-actions">
+                    <button class="reader-action" id="readerSaveBtn" title="Save article"><i class="far fa-bookmark"></i><span>Save</span></button>
+                    <button class="reader-action" id="readerShareBtn" title="Share article"><i class="fas fa-share-alt"></i><span>Share</span></button>
+                    <button class="reader-close" id="readerClose" title="Close"><i class="fas fa-times"></i></button>
+                </div>
             </div>
             <div class="reader-content" id="readerContent"></div>
         </div>
@@ -184,6 +189,10 @@
                 <button class="txt-btn" id="clearHistoryBtn">Clear All</button>
                 <button class="txt-btn" id="closeHistoryBtn"><i class="fas fa-times"></i></button>
             </div>
+        </div>
+        <div class="panel-intro">
+            <p>Pick up where you left off.</p>
+            <input class="panel-search" id="historySearch" type="search" placeholder="Search your history...">
         </div>
         <div class="history-body" id="historyList"></div>
     </div>
